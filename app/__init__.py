@@ -1,0 +1,1 @@
+"""MssqlPythonSync uygulama paketi."""

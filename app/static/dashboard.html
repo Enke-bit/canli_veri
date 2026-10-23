@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedicalPoint · DentSync Canlı Analitik</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-2: #172033;
+    --border: #334155;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --muted-2: #64748b;
+    --brand: #0ea5e9;
+    --brand-dark: #0284c7;
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --bad: #f43f5e;
+    --purple: #a78bfa;
+    --indigo: #6366f1;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--brand); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 18px; }
+
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .header-inner {
+    height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .brand-logo {
+    width: 42px; height: 42px; border-radius: 12px; background: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 20px rgba(14,165,233,.28); flex: none;
+  }
+  .brand-logo svg { width: 22px; height: 22px; stroke: #fff; fill: none; stroke-width: 2; }
+  .brand h1 { font-size: 17px; margin: 0; letter-spacing: .2px; display: flex; align-items: center; gap: 8px; }
+  .pill {
+    font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 999px;
+    background: rgba(14,165,233,.16); color: var(--brand); border: 1px solid rgba(14,165,233,.35);
+  }
+  .brand p { margin: 2px 0 0; font-size: 11.5px; color: var(--muted); }
+  .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .live-chip {
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+    background: rgba(30,41,59,.85); border: 1px solid var(--border); border-radius: 10px;
+    font-size: 11.5px; font-weight: 500; white-space: nowrap;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted-2); flex: none; }
+  .dot.ok { background: var(--ok); }
+  .dot.warn { background: var(--warn); }
+  .dot.bad { background: var(--bad); }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16,185,129,.7); }
+    70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  }
+  button, select { font-family: inherit; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+    border-radius: 9px; border: 1px solid var(--border); background: #334155;
+    color: var(--text); font-size: 12px; font-weight: 600; padding: 8px 12px;
+    transition: background .15s, border-color .15s, opacity .15s;
+  }
+  .btn:hover { background: #475569; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.primary { background: var(--brand-dark); border-color: var(--brand-dark); }
+  .btn.primary:hover { background: var(--brand); border-color: var(--brand); }
+  .btn.ghost { background: transparent; }
+  .btn.danger { background: rgba(244,63,94,.12); border-color: rgba(244,63,94,.45); color: #fda4af; }
+  .btn.danger:hover { background: rgba(244,63,94,.22); }
+  .btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  main { flex: 1; padding: 22px 0 8px; }
+  .grid { display: grid; gap: 16px; margin-bottom: 18px; }
+  .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .g23 { grid-template-columns: 1fr 2fr; }
+  .span2 { grid-column: span 2; }
+  @media (max-width: 980px) {
+    .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .g23, .g3 { grid-template-columns: 1fr; }
+    .span2 { grid-column: auto; }
+  }
+  @media (max-width: 620px) {
+    .g4 { grid-template-columns: 1fr; }
+    .header-inner { height: auto; padding: 14px 0; align-items: flex-start; flex-direction: column; }
+    .header-actions { width: 100%; justify-content: flex-start; }
+  }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px;
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .card-head h2 { font-size: 13px; margin: 0; font-weight: 600; color: #e2e8f0; letter-spacing: .2px; }
+  .tag {
+    font-size: 10.5px; color: var(--muted); background: #0f172a; border: 1px solid var(--border);
+    padding: 3px 8px; border-radius: 6px; white-space: nowrap;
+  }
+
+  .health-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; }
+  .health-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .icon-box {
+    width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex: none;
+  }
+  .icon-box svg { width: 18px; height: 18px; fill: none; stroke-width: 2; }
+  .ib-blue { background: rgba(59,130,246,.12); } .ib-blue svg { stroke: #60a5fa; }
+  .ib-purple { background: rgba(168,85,247,.12); } .ib-purple svg { stroke: #c084fc; }
+  .ib-green { background: rgba(16,185,129,.12); } .ib-green svg { stroke: #34d399; }
+  .health-label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+  .health-value { font-size: 13px; font-weight: 600; margin-top: 2px; }
+  .health-sub { font-size: 10.5px; color: var(--muted-2); margin-top: 2px; }
+
+  .metric { position: relative; overflow: hidden; }
+  .metric-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .metric-label { font-size: 11.5px; color: var(--muted); font-weight: 500; }
+  .metric-value { font-size: 26px; font-weight: 700; margin-top: 4px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .metric-note { margin-top: 10px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .metric-icon {
+    width: 36px; height: 36px; border-radius: 9px; background: #0f172a; border: 1px solid #243044;
+    display: flex; align-items: center; justify-content: center; flex: none;
+  }
+  .metric-icon svg { width: 16px; height: 16px; fill: none; stroke: #cbd5e1; stroke-width: 2; }
+
+  .chart-body { min-height: 250px; display: flex; align-items: center; justify-content: center; }
+  .chart-body svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--muted); }
+  .legend-swatch { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .legend-value { margin-left: auto; color: #e2e8f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .empty { color: var(--muted-2); font-size: 12px; text-align: center; padding: 40px 10px; }
+
+  .bars { display: flex; flex-direction: column; gap: 12px; }
+  .bar-row { display: grid; grid-template-columns: minmax(90px, 150px) 1fr 64px; gap: 10px; align-items: center; }
+  .bar-name { font-size: 11.5px; color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { height: 10px; border-radius: 999px; background: #0f172a; overflow: hidden; border: 1px solid #243044; }
+  .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #4f46e5, #6366f1); transition: width .4s ease; }
+  .bar-val { font-size: 11.5px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  .bar-val b { color: #e2e8f0; }
+
+  .feed { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 7px; padding-right: 4px; }
+  .feed::-webkit-scrollbar { width: 6px; }
+  .feed::-webkit-scrollbar-track { background: var(--card); }
+  .feed::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+  .feed-item {
+    display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px;
+    background: rgba(15,23,42,.6); border: 1px solid #2a3850; border-radius: 8px;
+  }
+  .feed-ico { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex: none; background: var(--muted-2); }
+  .feed-ico.ok { background: var(--ok); } .feed-ico.warn { background: var(--warn); }
+  .feed-ico.bad { background: var(--bad); } .feed-ico.info { background: var(--brand); }
+  .feed-msg { font-size: 11.5px; line-height: 1.45; color: #cbd5e1; }
+  .feed-msg b { color: #f1f5f9; font-weight: 600; }
+  .feed-time { font-size: 10px; color: var(--muted-2); margin-top: 2px; }
+  .feed-empty { font-size: 11.5px; color: var(--muted-2); padding: 8px 0; }
+
+  .banner {
+    display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 10px;
+    font-size: 12px; margin-bottom: 16px; border: 1px solid;
+  }
+  .banner.bad { background: rgba(244,63,94,.08); border-color: rgba(244,63,94,.35); color: #fecdd3; }
+  .banner.warn { background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.35); color: #fde68a; }
+  .banner.info { background: rgba(14,165,233,.08); border-color: rgba(14,165,233,.3); color: #bae6fd; }
+  .hidden { display: none !important; }
+
+  .demo-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+  select, input[type="number"] {
+    width: 100%; background: #0f172a; color: #e2e8f0; border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 10px; font-size: 12px; outline: none;
+  }
+  select:focus, input:focus { border-color: var(--brand); }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .result {
+    background: #0b1222; border: 1px solid #243044; border-radius: 10px; padding: 12px;
+    font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 11px;
+    color: #cbd5e1; min-height: 150px; max-height: 240px; overflow: auto; white-space: pre-wrap;
+    margin: 0; line-height: 1.5;
+  }
+  .hint { font-size: 11px; color: var(--muted-2); margin-top: 10px; line-height: 1.5; }
+  footer { border-top: 1px solid var(--border); background: var(--card); padding: 16px 0; margin-top: 14px; }
+  footer .wrap { font-size: 11px; color: var(--muted-2); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .kbd { font-family: ui-monospace, Consolas, monospace; background: #0f172a; border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; font-size: 10.5px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-inner">
+    <div class="brand">
+      <div class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M12 9v4"/><path d="M10 11h4"/></svg>
+      </div>
+      <div>
+        <h1>MedicalPoint <span class="pill">DentSync · canlı</span></h1>
+        <p>MSSQL + Python API senkronizasyonu · gerçek veri paneli</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="live-chip" title="Kaynak ve hedef API durumu">
+        <span id="liveDot" class="dot"></span>
+        <span id="liveText">Bağlanıyor…</span>
+      </div>
+      <button id="autoBtn" class="btn" onclick="toggleAuto()" title="10 saniyede bir otomatik yenile">
+        <svg viewBox="0 0 24 24"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.9 4.9l2.9 2.9"/><path d="M16.2 16.2l2.9 2.9"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.9 19.1l2.9-2.9"/><path d="M16.2 7.8l2.9-2.9"/></svg>
+        <span id="autoText">Canlı akış: Açık</span>
+      </button>
+      <button class="btn primary" onclick="loadAll(true)">
+        <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+        <span>Yenile</span>
+      </button>
+      <a class="btn ghost" href="/kilavuz">Kılavuz</a>
+      <a class="btn ghost" href="/mimari">Mimari</a>
+      <a class="btn ghost" href="/docs" target="_blank" rel="noopener">API Docs</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div id="banner" class="banner bad hidden" role="status" aria-live="polite"></div>
+
+    <!-- Servis sağlığı -->
+    <section class="grid g3" aria-label="Servis durumu">
+      <div class="card health-card">
+        <div class="health-left">
+          <div class="icon-box ib-blue"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="7" rx="2"/><rect x="2" y="14" width="20" height="7" rx="2"/><path d="M6 6.5h.01M6 17.5h.01"/></svg></div>
+          <div>
+            <div class="health-label">Kaynak API · :8001</div>
+            <div class="health-value" id="sourceVal">Kontrol ediliyor…</div>
+            <div class="health-sub" id="sourceSub">—</div>
+          </div>
+        </div>
+        <span id="sourceDot" class="dot"></span>
+      </div>
+      <div class="card health-card">
+        <div class="health-left">
+          <div class="icon-box ib-purple"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg></div>
+          <div>
+            <div class="health-label">Hedef API · :8000</div>
+            <div class="health-value" id="targetVal">Kontrol ediliyor…</div>
+            <div class="health-sub" id="targetSub">—</div>
+          </div>
+        </div>
+        <span id="targetDot" class="dot"></span>
+      </div>
+      <div class="card health-card">
+        <div class="health-left">
+          <div class="icon-box ib-green"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></div>
+          <div>
+            <div class="health-label">Sync Engine</div>
+            <div class="health-value" id="syncVal">—</div>
+            <div class="health-sub" id="syncSub">—</div>
+          </div>
+        </div>
+        <span id="syncDot" class="dot"></span>
+      </div>
+    </section>
+
+    <!-- Metrikler -->
+    <section class="grid g4" aria-label="Temel metrikler">
+      <div class="card metric">
+        <div class="metric-top">
+          <div>
+            <div class="metric-label">Toplam Klinik</div>
+            <div class="metric-value" id="mClinics">—</div>
+          </div>
+          <div class="metric-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M12 9v4"/><path d="M10 11h4"/></svg></div>
+        </div>
+        <div class="metric-note" id="mClinicsNote">MSSQL · aktif kayıtlar</div>
+      </div>
+      <div class="card metric">
+        <div class="metric-top">
+          <div>
+            <div class="metric-label">Toplam Hasta</div>
+            <div class="metric-value" id="mPatients">—</div>
+          </div>
+          <div class="metric-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        </div>
+        <div class="metric-note" id="mPatientsNote">Sentetik hasta kaydı</div>
+      </div>
+      <div class="card metric">
+        <div class="metric-top">
+          <div>
+            <div class="metric-label">Randevu</div>
+            <div class="metric-value" id="mAppointments">—</div>
+          </div>
+          <div class="metric-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 15l2 2 4-4"/></svg></div>
+        </div>
+        <div class="metric-note" id="mAppointmentsNote">Aktif (silinmemiş)</div>
+      </div>
+      <div class="card metric">
+        <div class="metric-top">
+          <div>
+            <div class="metric-label">Senkronizasyon Başarısı</div>
+            <div class="metric-value" id="mReliability" style="color:var(--ok)">—</div>
+          </div>
+          <div class="metric-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        </div>
+        <div class="metric-note" id="mReliabilityNote">SyncLog kayıtlarından</div>
+      </div>
+    </section>
+
+    <!-- Grafikler -->
+    <section class="grid g23" aria-label="Grafikler">
+      <div class="card">
+        <div class="card-head">
+          <h2>Randevu Durum Dağılımı</h2>
+          <span class="tag">canlı</span>
+        </div>
+        <div class="chart-body" id="statusChart"><div class="empty">Veri bekleniyor…</div></div>
+        <div class="legend" id="statusLegend"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Hasta Kayıt Trendi</h2>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label for="months" style="font-size:11px;color:var(--muted)">Dönem</label>
+            <select id="months" style="width:auto;padding:5px 8px" onchange="loadAll(true)">
+              <option value="6">Son 6 ay</option>
+              <option value="12">Son 12 ay</option>
+              <option value="24">Son 24 ay</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-body" id="growthChart"><div class="empty">Veri bekleniyor…</div></div>
+      </div>
+    </section>
+
+    <!-- Klinik hacmi + akış -->
+    <section class="grid g23" aria-label="Klinik ve akış">
+      <div class="card">
+        <div class="card-head">
+          <h2>Klinik Hasta Hacmi</h2>
+          <span class="tag">ilk 5 klinik</span>
+        </div>
+        <div class="bars" id="clinicBars"><div class="empty">Veri bekleniyor…</div></div>
+        <div class="metric-note" id="timelineNote" style="margin-top:14px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Canlı Senkronizasyon Akışı</h2>
+          <button class="btn ghost" style="padding:4px 8px;font-size:11px" onclick="clearFeed()">Temizle</button>
+        </div>
+        <div class="feed" id="feed" aria-live="polite"><div class="feed-empty">Henüz olay yok.</div></div>
+      </div>
+    </section>
+
+    <!-- Demo kontrolleri -->
+    <section class="grid" aria-label="Demo kontrolleri">
+      <div class="card">
+        <div class="card-head">
+          <h2>Uçtan uca deneme · gerçek API çağrıları</h2>
+          <span class="tag" id="triggerTag">sync tetikleme: bilinmiyor</span>
+        </div>
+        <div class="demo-grid">
+          <div>
+            <div class="field">
+              <label for="appointmentSelect">Randevu seç (hedef API'den)</label>
+              <select id="appointmentSelect">
+                <option value="">Yükleniyor…</option>
+              </select>
+            </div>
+            <div class="btn-row">
+              <button class="btn danger" onclick="demoAction('cancel')">Kaynakta iptal et</button>
+              <button class="btn" onclick="demoAction('procedure')">Kaynakta işlem türünü değiştir</button>
+              <button class="btn primary" onclick="demoAction('sync')">Senkronize et</button>
+              <button class="btn" onclick="demoAction('status')">Hedef API'de Confirmed yap</button>
+            </div>
+            <div class="hint">
+              Kaynak değişikliği önce <b>kaynak API'de</b> (port 8001) yapılır, ardından senkronizasyon
+              çalışır ve hedef API (port 8000) MSSQL'deki güncel değeri gösterir. Bu panel sahte
+              veri üretmez; her sayı veritabanından gelir.
+            </div>
+          </div>
+          <div>
+            <div class="field"><label>Son işlem sonucu</label></div>
+            <pre class="result" id="result" aria-live="polite">Hazır.</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>MedicalPoint Analytics · DentSync Demo · MSSQL <span class="kbd">DentSyncDemo</span></span>
+    <span><a href="/kilavuz" style="color:var(--muted)">Kılavuz</a> · <a href="/mimari" style="color:var(--muted)">Mimari</a> · <span id="footerStamp">—</span></span>
+  </div>
+</footer>
+
+<script>
+  "use strict";
+
+  // ---------------------------------------------------------------- yapılandırma
+  const qs = new URLSearchParams(location.search);
+  // Panel hedef API tarafindan sunuluyorsa ayni kokeni kullan (port farkli olsa da).
+  const servedByTarget = location.protocol.startsWith("http");
+  const TARGET_API = qs.get("target") || (servedByTarget ? location.origin : "http://127.0.0.1:8000");
+  const SOURCE_API = qs.get("source") || "http://127.0.0.1:8001";
+  const REFRESH_MS = 10000;
+
+  const COLORS = {
+    Completed: "#10b981",
+    Confirmed: "#22d3ee",
+    Scheduled: "#0ea5e9",
+    Cancelled: "#f43f5e",
+    unknown: "#64748b",
+  };
+
+  const state = {
+    auto: true,
+    timer: null,
+    busy: false,
+    summary: null,
+    sourceOk: false,
+    targetOk: false,
+    seenFeed: new Set(),
+    syncTrigger: null,
+    appointmentsLoaded: false,
+  };
+
+  // ---------------------------------------------------------------- yardımcılar
+  const $ = (id) => document.getElementById(id);
+  const nf = new Intl.NumberFormat("tr-TR");
+
+  function fmtNumber(value) {
+    return typeof value === "number" && isFinite(value) ? nf.format(value) : "—";
+  }
+
+  function fmtLag(seconds) {
+    if (seconds === null || seconds === undefined) return "henüz yok";
+    if (seconds < 60) return seconds + " sn";
+    if (seconds < 3600) return Math.floor(seconds / 60) + " dk";
+    if (seconds < 86400) return Math.floor(seconds / 3600) + " sa";
+    return Math.floor(seconds / 86400) + " gün";
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function monthLabel(key) {
+    const names = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+    const [year, month] = key.split("-").map(Number);
+    return names[month - 1] + " " + String(year).slice(2);
+  }
+
+  async function apiFetch(path, options) {
+    const opts = Object.assign({ headers: {} }, options || {});
+    opts.signal = AbortSignal.timeout(8000);
+    if (opts.body && !opts.headers["Content-Type"]) {
+      opts.headers["Content-Type"] = "application/json";
+    }
+    const response = await fetch(path, opts);
+    let payload = null;
+    const text = await response.text();
+    if (text) {
+      try { payload = JSON.parse(text); } catch (_) { payload = { raw: text }; }
+    }
+    if (!response.ok) {
+      const detail = payload && (payload.detail || payload.message);
+      const error = new Error(
+        typeof detail === "string" ? detail : "HTTP " + response.status + " " + response.statusText
+      );
+      error.status = response.status;
+      error.payload = payload;
+      throw error;
+    }
+    return payload;
+  }
+
+  function setBanner(kind, html) {
+    const el = $("banner");
+    if (!kind) { el.className = "banner hidden"; el.innerHTML = ""; return; }
+    el.className = "banner " + kind;
+    el.innerHTML = html;
+  }
+
+  function setDot(id, status) {
+    const el = $(id);
+    el.className = "dot" + (status ? " " + status : "");
+    if (status === "ok") el.classList.add("pulse");
+  }
+
+  // ---------------------------------------------------------------- yükleme
+  async function loadAll(manual) {
+    if (state.busy) return;
+    state.busy = true;
+    if (manual) addFeed("info", "Panel yenilendi.");
+
+    const months = Number($("months").value || 6);
+    const results = await Promise.allSettled([
+      apiFetch(TARGET_API + "/health"),
+      apiFetch(TARGET_API + "/api/v1/analytics/summary?months=" + months),
+      apiFetch(SOURCE_API + "/health"),
+    ]);
+
+    const targetHealth = results[0];
+    const summary = results[1];
+    const sourceHealth = results[2];
+
+    state.targetOk = targetHealth.status === "fulfilled" && targetHealth.value.status === "ok";
+    if (state.targetOk) {
+      const db = targetHealth.value.database || {};
+      $("targetVal").textContent = "Çevrimiçi · MSSQL";
+      $("targetVal").style.color = "var(--ok)";
+      $("targetSub").textContent = "DB: " + (db.name || "?") + " · " + fmtTime(targetHealth.value.time);
+      setDot("targetDot", "ok");
+    } else {
+      $("targetVal").textContent = "Ulaşılamıyor";
+      $("targetVal").style.color = "var(--bad)";
+      $("targetSub").textContent = targetHealth.status === "rejected"
+        ? String(targetHealth.reason.message).slice(0, 90) : "bilinmeyen hata";
+      setDot("targetDot", "bad");
+    }
+
+    const srcPayload = sourceHealth.status === "fulfilled" ? sourceHealth.value : null;
+    state.sourceOk = !!srcPayload && srcPayload.status === "ok";
+    if (state.sourceOk) {
+      const c = srcPayload.counts || {};
+      $("sourceVal").textContent = "Çevrimiçi · veri hazır";
+      $("sourceVal").style.color = "var(--ok)";
+      $("sourceSub").textContent =
+        fmtNumber(c.clinics) + " klinik · " + fmtNumber(c.patients) + " hasta · " +
+        fmtNumber(c.appointments) + " randevu";
+      setDot("sourceDot", "ok");
+    } else {
+      $("sourceVal").textContent = srcPayload ? "Veri dosyası yok" : "Ulaşılamıyor";
+      $("sourceVal").style.color = "var(--warn)";
+      $("sourceSub").textContent = srcPayload
+        ? "scripts/generate_synthetic_data.py çalıştırın"
+        : (sourceHealth.status === "rejected" ? String(sourceHealth.reason.message).slice(0, 90) : "—");
+      setDot("sourceDot", "warn");
+    }
+
+    if (summary.status === "fulfilled") {
+      state.summary = summary.value;
+      renderSummary(summary.value);
+      if (state.sourceOk) {
+        setBanner(null);
+      } else {
+        setBanner("warn",
+          "<b>Kaynak API çevrimdışı.</b> Hedef API ve MSSQL verisi gösteriliyor; " +
+          "senkronizasyon çalıştırmak için <span class='kbd'>scripts\\run_source_api.ps1</span> ile " +
+          "kaynak API'yi başlatın.");
+      }
+    } else {
+      const msg = String(summary.reason && summary.reason.message || "bilinmeyen hata");
+      setBanner("bad",
+        "<b>Hedef API'den veri alınamadı.</b> Sahte veri gösterilmiyor. " +
+        "Kontrol edin: <span class='kbd'>scripts\\run_target_api.ps1</span> ve MSSQL servisi. " +
+        "Hata: " + escapeHtml(msg.slice(0, 160)));
+      $("mReliability").textContent = "—";
+    }
+
+    $("liveDot").className = "dot " + (state.sourceOk && state.targetOk ? "ok" : "warn") +
+      (state.sourceOk && state.targetOk ? " pulse" : "");
+    $("liveText").textContent = state.sourceOk && state.targetOk
+      ? "Canlı · iki API çevrimiçi"
+      : (state.targetOk ? "Kısmi · kaynak API yok" : "Bağlantı yok");
+    $("footerStamp").textContent = "Son güncelleme: " + new Date().toLocaleTimeString("tr-TR");
+
+    if (!state.appointmentsLoaded && state.targetOk) {
+      await loadAppointments();
+    } else if (!state.targetOk) {
+      $("appointmentSelect").innerHTML = '<option value="">Hedef API kapalı</option>';
+    }
+
+    state.busy = false;
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (ch) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[ch]));
+  }
+
+  // ---------------------------------------------------------------- render
+  function renderSummary(s) {
+    const totals = s.totals || {};
+    $("mClinics").textContent = fmtNumber(totals.clinics);
+    $("mPatients").textContent = fmtNumber(totals.patients);
+    $("mAppointments").textContent = fmtNumber(totals.appointments);
+    $("mClinicsNote").textContent = "MSSQL · " + (s.clinic_volumes || []).length + " aktif klinik";
+    $("mPatientsNote").textContent = "Silinmiş randevu: " + fmtNumber(totals.deleted_appointments);
+    const t = s.timeline || {};
+    $("mAppointmentsNote").textContent =
+      "Bugün " + fmtNumber(t.today) + " · 7 gün " + fmtNumber(t.next_7_days);
+
+    const sync = s.sync || {};
+    const rate = sync.success_rate;
+    $("mReliability").textContent = rate === null || rate === undefined ? "—" : "%" + rate;
+    $("mReliability").style.color = rate === null || rate === undefined
+      ? "var(--muted)" : (rate >= 99 ? "var(--ok)" : rate >= 90 ? "var(--warn)" : "var(--bad)");
+    $("mReliabilityNote").textContent =
+      fmtNumber(sync.success_runs) + " başarılı · " + fmtNumber(sync.failed_runs) + " başarısız tur";
+
+    // Sync engine kartı
+    const recent = sync.recent_logs || [];
+    const last = recent[0];
+    if (last) {
+      const ok = last.status === "Success";
+      $("syncVal").textContent = ok ? "Senkronize" : ("Son tur: " + last.status);
+      $("syncVal").style.color = ok ? "var(--ok)" : (last.status === "Failed" ? "var(--bad)" : "var(--warn)");
+      $("syncSub").textContent = last.entity_type + " · " + fmtTime(last.started_at) +
+        " · gecikme " + fmtLag(sync.lag_seconds);
+      setDot("syncDot", ok ? "ok" : (last.status === "Failed" ? "bad" : "warn"));
+    } else {
+      $("syncVal").textContent = "Henüz çalışmadı";
+      $("syncVal").style.color = "var(--muted)";
+      $("syncSub").textContent = "python scripts\\sync_api_to_mssql.py";
+      setDot("syncDot", "warn");
+    }
+
+    // Durum grafiği
+    const counts = s.appointment_status_counts || {};
+    const order = ["Completed", "Confirmed", "Scheduled", "Cancelled"];
+    const items = order.map((key) => ({ key, label: key, value: counts[key] || 0, color: COLORS[key] }));
+    const total = items.reduce((sum, item) => sum + item.value, 0);
+    renderDoughnut("statusChart", items, total);
+    renderLegend(items, total);
+
+    // Trend grafiği
+    const trend = s.patient_registrations || [];
+    renderLine(
+      "growthChart",
+      trend.map((row) => monthLabel(row.month)),
+      trend.map((row) => row.count)
+    );
+
+    // Klinik barları
+    const clinics = (s.clinic_volumes || []).slice(0, 5);
+    const bars = $("clinicBars");
+    if (!clinics.length) {
+      bars.innerHTML = '<div class="empty">Klinik verisi yok. Önce senkronizasyon çalıştırın.</div>';
+    } else {
+      const max = Math.max.apply(null, clinics.map((c) => c.patients).concat([1]));
+      bars.innerHTML = clinics.map((c) => {
+        const width = Math.round((c.patients / max) * 100);
+        return '<div class="bar-row" title="' + escapeHtml(c.name) + ' · ' + c.appointments + ' randevu">' +
+          '<div class="bar-name">' + escapeHtml(c.name) + '</div>' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + width + '%"></div></div>' +
+          '<div class="bar-val"><b>' + fmtNumber(c.patients) + '</b> hasta</div>' +
+          '</div>';
+      }).join("");
+    }
+
+    $("timelineNote").textContent =
+      "Geçmiş randevu: " + fmtNumber(t.past) + " · son başarılı senkronizasyon: " +
+      (sync.last_successful_run_at ? fmtTime(sync.last_successful_run_at) : "henüz yok");
+
+    // Sync tetikleme yeteneği (sunucudan bildirilir)
+    if (s.capabilities && typeof s.capabilities.sync_trigger === "boolean") {
+      state.syncTrigger = s.capabilities.sync_trigger;
+      updateTriggerTag(state.syncTrigger);
+    }
+
+    // Akışa gerçek SyncLog kayıtlarını ekle (tekrarsız)
+    recent.slice().reverse().forEach((log) => {
+      const key = "log-" + log.sync_log_id;
+      if (state.seenFeed.has(key)) return;
+      state.seenFeed.add(key);
+      const parts = [];
+      if (log.records_inserted) parts.push(log.records_inserted + " yeni");
+      if (log.records_updated) parts.push(log.records_updated + " güncel");
+      if (log.records_deleted_marked) parts.push(log.records_deleted_marked + " silindi");
+      const detail = parts.length ? " · " + parts.join(", ") : "";
+      const kind = log.status === "Success" ? "ok" : "bad";
+      addFeed(kind,
+        "<b>" + escapeHtml(log.entity_type) + "</b> · " + escapeHtml(log.status) + detail,
+        fmtTime(log.started_at), key);
+    });
+  }
+
+  function renderLegend(items, total) {
+    $("statusLegend").innerHTML = items.map((item) => {
+      const pct = total ? Math.round((item.value / total) * 1000) / 10 : 0;
+      return '<div class="legend-item"><span class="legend-swatch" style="background:' + item.color +
+        '"></span>' + item.label +
+        '<span class="legend-value">' + fmtNumber(item.value) + ' · %' + pct + '</span></div>';
+    }).join("");
+  }
+
+  function renderDoughnut(containerId, items, total) {
+    const container = $(containerId);
+    if (!total) {
+      container.innerHTML = '<div class="empty">Randevu verisi yok.</div>';
+      return;
+    }
+    const size = 210, cx = size / 2, cy = size / 2, r = 74, width = 26;
+    const circumference = 2 * Math.PI * r;
+    let offset = 0;
+    const segments = items.map((item) => {
+      const fraction = total ? item.value / total : 0;
+      const length = fraction * circumference;
+      const seg = '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + item.color +
+        '" stroke-width="' + width + '" stroke-dasharray="' + length.toFixed(2) + ' ' +
+        (circumference - length).toFixed(2) + '" stroke-dashoffset="' + (-offset).toFixed(2) +
+        '" transform="rotate(-90 ' + cx + ' ' + cy + ')"><title>' + item.label + ": " + item.value + '</title></circle>';
+      offset += length;
+      return seg;
+    }).join("");
+    container.innerHTML =
+      '<svg viewBox="0 0 ' + size + ' ' + size + '" style="max-width:230px" role="img" aria-label="Randevu durum dağılımı">' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#243044" stroke-width="' + width + '"/>' +
+      segments +
+      '<text x="' + cx + '" y="' + (cy - 2) + '" text-anchor="middle" fill="#f8fafc" font-size="24" font-weight="700">' +
+      fmtNumber(total) + '</text>' +
+      '<text x="' + cx + '" y="' + (cy + 18) + '" text-anchor="middle" fill="#94a3b8" font-size="11">toplam randevu</text>' +
+      '</svg>';
+  }
+
+  function niceMax(value) {
+    if (value <= 0) return 4;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(value)));
+    const normalized = value / magnitude;
+    const step = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+    let candidate = step * magnitude;
+    while (candidate < value) candidate += step * magnitude;
+    return Math.max(candidate, 1);
+  }
+
+  function renderLine(containerId, labels, values) {
+    const container = $(containerId);
+    if (!values.length) {
+      container.innerHTML = '<div class="empty">Kayıt trendi için veri yok.</div>';
+      return;
+    }
+    const W = 640, H = 250, padL = 46, padR = 16, padT = 16, padB = 34;
+    const max = niceMax(Math.max.apply(null, values));
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+    const stepX = values.length > 1 ? plotW / (values.length - 1) : 0;
+    const xAt = (i) => padL + (values.length > 1 ? i * stepX : plotW / 2);
+    const yAt = (v) => padT + plotH - (v / max) * plotH;
+
+    let grid = "";
+    for (let g = 0; g <= 4; g++) {
+      const value = (max / 4) * g;
+      const y = yAt(value);
+      grid += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y +
+        '" stroke="#334155" stroke-width="1" stroke-dasharray="' + (g === 0 ? "0" : "3 4") + '"/>' +
+        '<text x="' + (padL - 8) + '" y="' + (y + 4) + '" text-anchor="end" fill="#64748b" font-size="10">' +
+        Math.round(value) + '</text>';
+    }
+
+    const points = values.map((v, i) => [xAt(i), yAt(v)]);
+    const linePath = points.map((p, i) => (i === 0 ? "M" : "L") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    const areaPath = linePath + " L" + points[points.length - 1][0].toFixed(1) + " " + (H - padB) +
+      " L" + points[0][0].toFixed(1) + " " + (H - padB) + " Z";
+
+    const dots = points.map((p, i) =>
+      '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.5" fill="#0ea5e9" stroke="#0f172a" stroke-width="2">' +
+      '<title>' + labels[i] + ": " + values[i] + '</title></circle>').join("");
+
+    const labelEvery = labels.length > 12 ? 2 : 1;
+    const xLabels = labels.map((label, i) =>
+      (i % labelEvery === 0 || i === labels.length - 1)
+        ? '<text x="' + xAt(i).toFixed(1) + '" y="' + (H - 12) + '" text-anchor="middle" fill="#64748b" font-size="10">' +
+          label + '</text>' : "").join("");
+
+    container.innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Aylık hasta kayıt trendi">' +
+      '<defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.35"/>' +
+      '<stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>' +
+      '</linearGradient></defs>' +
+      grid +
+      '<path d="' + areaPath + '" fill="url(#areaFill)"/>' +
+      '<path d="' + linePath + '" fill="none" stroke="#0ea5e9" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>' +
+      dots + xLabels + '</svg>';
+  }
+
+  // ---------------------------------------------------------------- akış
+  function addFeed(kind, message, time, key) {
+    const feed = $("feed");
+    const empty = feed.querySelector(".feed-empty");
+    if (empty) empty.remove();
+
+    const id = key || ("local-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+    if (state.seenFeed.has(id)) return;
+    state.seenFeed.add(id);
+
+    const item = document.createElement("div");
+    item.className = "feed-item";
+    item.dataset.key = id;
+    item.innerHTML = '<span class="feed-ico ' + kind + '"></span>' +
+      '<div><div class="feed-msg">' + message + '</div>' +
+      '<div class="feed-time">' + (time || new Date().toLocaleTimeString("tr-TR")) + '</div></div>';
+    feed.prepend(item);
+
+    while (feed.children.length > 40) feed.removeChild(feed.lastChild);
+  }
+
+  function clearFeed() {
+    $("feed").innerHTML = '<div class="feed-empty">Akış temizlendi.</div>';
+    state.seenFeed.clear();
+  }
+
+  function setResult(payload) {
+    $("result").textContent = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+  }
+
+  // ---------------------------------------------------------------- randevular
+  async function loadAppointments() {
+    const select = $("appointmentSelect");
+    try {
+      const page = await apiFetch(TARGET_API + "/api/v1/appointments?limit=40&include_deleted=false");
+      const rows = (page.data || []).slice(0, 40);
+      if (!rows.length) {
+        select.innerHTML = '<option value="">Kayıt yok — önce senkronize edin</option>';
+        return;
+      }
+      select.innerHTML = '<option value="">Seçiniz…</option>' + rows.map((row) => {
+        const when = fmtTime(row.appointment_datetime);
+        return '<option value="' + escapeHtml(row.external_appointment_id) + '">' +
+          escapeHtml(row.external_appointment_id) + " · " + when + " · " +
+          escapeHtml(row.status) + " · " + escapeHtml(row.procedure_type) + '</option>';
+      }).join("");
+      state.appointmentsLoaded = true;
+      // Ön seçim (?appointment=APT-...) her yenilemede korunur.
+      const preset = qs.get("appointment");
+      if (preset && rows.some((row) => row.external_appointment_id === preset)) {
+        select.value = preset;
+      }
+    } catch (error) {
+      select.innerHTML = '<option value="">Randevular yüklenemedi</option>';
+    }
+  }
+
+  // ---------------------------------------------------------------- demo
+  async function demoAction(action) {
+    const id = $("appointmentSelect").value;
+    // Senkronizasyon tek başına çalışabilir; diğer işlemler randevu seçimi ister.
+    if (action !== "sync" && !id) {
+      setResult("Önce listeden bir randevu seçin.");
+      addFeed("warn", "İşlem için randevu seçilmedi.");
+      return;
+    }
+    const buttons = document.querySelectorAll(".demo-grid .btn");
+    buttons.forEach((b) => { b.disabled = true; });
+    const encoded = encodeURIComponent(id);
+
+    try {
+      if (action === "cancel") {
+        setResult("POST " + SOURCE_API + "/source/appointments/" + id + "/cancel …");
+        const response = await apiFetch(SOURCE_API + "/source/appointments/" + encoded + "/cancel", { method: "POST" });
+        const updated = response.data[0];
+        addFeed("warn", "<b>Kaynak</b> · " + escapeHtml(id) + " iptal edildi (" + escapeHtml(updated.status) + ").");
+        setResult({ adim: "kaynak iptal", randevu: updated });
+        await runSync("İptal kaynakta; senkronize ediliyor…");
+      } else if (action === "procedure") {
+        const options = ["Genel muayene", "Kontrol", "Dis temizligi", "Dolgu", "Kanal tedavisi"];
+        const next = options[Math.floor(Math.random() * options.length)];
+        const response = await apiFetch(SOURCE_API + "/source/appointments/" + encoded, {
+          method: "PATCH",
+          body: JSON.stringify({ procedure_type: next }),
+        });
+        addFeed("info", "<b>Kaynak</b> · " + escapeHtml(id) + " işlem türü → " + escapeHtml(next) + ".");
+        setResult({ adim: "kaynak güncelleme", randevu: response.data[0] });
+        await runSync("Kaynak güncellendi; senkronize ediliyor…");
+      } else if (action === "status") {
+        const response = await apiFetch(TARGET_API + "/api/v1/appointments/" + encoded + "/status", {
+          method: "PATCH",
+          body: JSON.stringify({ status: "Confirmed" }),
+        });
+        addFeed("ok", "<b>Hedef API</b> · " + escapeHtml(id) + " durumu Confirmed yapıldı (MSSQL).");
+        setResult({ adim: "hedef durum güncelleme", randevu: response });
+        await loadAll(false);
+      } else if (action === "sync") {
+        await runSync("Senkronizasyon başlatıldı…");
+      }
+    } catch (error) {
+      addFeed("bad", "İşlem başarısız: " + escapeHtml(error.message));
+      setResult({ hata: error.message, status: error.status || null, detay: error.payload || null });
+      if (error.status === 403) {
+        state.syncTrigger = false;
+        updateTriggerTag(false);
+      }
+    } finally {
+      buttons.forEach((b) => { b.disabled = false; });
+    }
+  }
+
+  async function runSync(reason) {
+    addFeed("info", escapeHtml(reason || "Senkronizasyon çalışıyor…"));
+    try {
+      const result = await apiFetch(TARGET_API + "/api/v1/sync/run", { method: "POST" });
+      state.syncTrigger = true;
+      updateTriggerTag(true);
+      const summary = (result.entities || []).map((e) =>
+        e.entity + ": okunan " + e.read + ", eklenen " + e.inserted + ", güncellenen " + e.updated +
+        ", silinen " + e.deleted_marked + (e.errors ? ", hata " + e.errors : "")
+      ).join("\n");
+      addFeed(result.success ? "ok" : "bad",
+        "<b>Senkronizasyon</b> · " + (result.success ? "başarılı" : "BAŞARISIZ") +
+        (result.error ? " · " + escapeHtml(result.error) : ""));
+      setResult({ basarili: result.success, job_id: result.job_id, ozet: summary, hata: result.error });
+      await loadAppointments();
+      await loadAll(false);
+    } catch (error) {
+      if (error.status === 403) {
+        state.syncTrigger = false;
+        updateTriggerTag(false);
+        addFeed("warn",
+          "<b>Sync tetikleme kapalı.</b> Terminalde " +
+          "<span class='kbd'>python scripts\\sync_api_to_mssql.py</span> çalıştırın veya " +
+          ".env içinde <span class='kbd'>ENABLE_SYNC_TRIGGER=true</span> yapın.");
+        setResult("403 · " + error.message);
+        return;
+      }
+      addFeed("bad", "Senkronizasyon hatası: " + escapeHtml(error.message));
+      setResult({ hata: error.message, status: error.status || null, detay: error.payload || null });
+    }
+  }
+
+  function updateTriggerTag(enabled) {
+    const tag = $("triggerTag");
+    if (enabled) {
+      tag.textContent = "sync tetikleme: açık";
+      tag.style.color = "var(--ok)";
+      tag.style.borderColor = "rgba(16,185,129,.4)";
+    } else {
+      tag.textContent = "sync tetikleme: kapalı";
+      tag.style.color = "var(--warn)";
+      tag.style.borderColor = "rgba(245,158,11,.4)";
+    }
+  }
+
+  // ---------------------------------------------------------------- otomasyon
+  function toggleAuto() {
+    state.auto = !state.auto;
+    $("autoText").textContent = state.auto ? "Canlı akış: Açık" : "Canlı akış: Kapalı";
+    const dot = $("liveDot");
+    if (state.auto) {
+      startTimer();
+      addFeed("info", "Otomatik yenileme açıldı (10 sn).");
+    } else {
+      stopTimer();
+      addFeed("info", "Otomatik yenileme kapatıldı.");
+    }
+    if (!state.auto && dot.classList.contains("pulse")) dot.classList.remove("pulse");
+  }
+
+  function startTimer() {
+    stopTimer();
+    state.timer = setInterval(() => {
+      if (state.auto && !document.hidden && !state.busy) loadAll(false);
+    }, REFRESH_MS);
+  }
+
+  function stopTimer() {
+    if (state.timer) clearInterval(state.timer);
+    state.timer = null;
+  }
+
+  // ---------------------------------------------------------------- başlat
+  window.addEventListener("DOMContentLoaded", () => {
+    startTimer();
+    loadAll(false);
+    // Sync tetikleme durumunu ilk çağrıda öğrenmek için küçük bir deneme yapmıyoruz;
+    // ilk senkronizasyon denemesinde 403 gelirse etiket güncellenir.
+  });
+</script>
+</body>
+</html>

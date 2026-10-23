@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sıfırdan Çalıştırma Kılavuzu · DentSync</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --card2: #172033; --border: #334155;
+    --text: #f8fafc; --muted: #94a3b8; --muted2: #64748b;
+    --brand: #0ea5e9; --brand2: #0284c7; --ok: #10b981; --warn: #f59e0b;
+    --bad: #f43f5e; --purple: #a78bfa; --code: #0b1222; --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    line-height: 1.62; -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--brand); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  header {
+    position: sticky; top: 0; z-index: 50; background: rgba(30,41,59,.96);
+    border-bottom: 1px solid var(--border); backdrop-filter: blur(8px);
+  }
+  .hd { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .logo {
+    width: 38px; height: 38px; border-radius: 11px; background: var(--brand);
+    display: flex; align-items: center; justify-content: center; flex: none;
+    box-shadow: 0 8px 18px rgba(14,165,233,.28);
+  }
+  .logo svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; }
+  .brand b { font-size: 15px; display: block; line-height: 1.25; }
+  .brand span { font-size: 11px; color: var(--muted); }
+  nav.top { display: flex; gap: 6px; flex-wrap: wrap; }
+  nav.top a {
+    font-size: 12px; color: #cbd5e1; padding: 7px 10px; border-radius: 8px;
+    border: 1px solid transparent;
+  }
+  nav.top a:hover { background: #0f172a; border-color: var(--border); text-decoration: none; }
+  nav.top a.active { background: rgba(14,165,233,.14); border-color: rgba(14,165,233,.4); color: #7dd3fc; }
+  @media (max-width: 760px) {
+    .hd { height: auto; padding: 12px 0; flex-direction: column; align-items: flex-start; }
+    nav.top { width: 100%; }
+  }
+
+  .hero { padding: 30px 0 10px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;
+    color: #7dd3fc; background: rgba(14,165,233,.12); border: 1px solid rgba(14,165,233,.35);
+    padding: 3px 10px; border-radius: 99px; margin-bottom: 12px;
+  }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 10px; letter-spacing: -.4px; }
+  .lede { color: var(--muted); font-size: 14.5px; max-width: 78ch; margin: 0 0 18px; }
+  @media (max-width: 600px) { h1 { font-size: 24px; } }
+
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0 6px; }
+  .fact { background: var(--card); border: 1px solid var(--border); border-radius: 11px; padding: 12px 14px; }
+  .fact .k { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; color: var(--muted2); }
+  .fact .v { font-size: 14px; font-weight: 600; margin-top: 3px; }
+  @media (max-width: 760px) { .facts { grid-template-columns: 1fr 1fr; } }
+
+  main { padding: 8px 0 60px; }
+  section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; margin: 18px 0; }
+  section > h2 {
+    font-size: 18px; margin: 0 0 6px; letter-spacing: -.2px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .num {
+    width: 27px; height: 27px; border-radius: 8px; background: rgba(14,165,233,.14);
+    color: #7dd3fc; font-size: 13px; font-weight: 700; display: inline-flex;
+    align-items: center; justify-content: center; flex: none; border: 1px solid rgba(14,165,233,.3);
+  }
+  section h3 { font-size: 14px; margin: 22px 0 8px; color: #e2e8f0; }
+  section h3:first-of-type { margin-top: 14px; }
+  section p { font-size: 13.5px; color: #cbd5e1; margin: 8px 0; }
+  section ul, section ol { font-size: 13.5px; color: #cbd5e1; padding-left: 22px; margin: 8px 0; }
+  section li { margin: 5px 0; }
+  strong { color: #f1f5f9; }
+  code.inl {
+    font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 12px;
+    background: #0f172a; border: 1px solid #2a3850; border-radius: 5px; padding: 1px 5px; color: #a5f3fc;
+  }
+
+  .step { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 14px 0; }
+  .term {
+    background: var(--code); border: 1px solid #243044; border-radius: 10px; overflow: hidden;
+    margin: 10px 0;
+  }
+  .term-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 7px 12px; border-bottom: 1px solid #243044; background: #0d1526;
+    font-size: 10.5px; color: var(--muted2); letter-spacing: .4px; text-transform: uppercase;
+  }
+  .term pre {
+    margin: 0; padding: 12px 14px; font-family: ui-monospace, Consolas, "Courier New", monospace;
+    font-size: 12.2px; line-height: 1.65; color: #d7e3f4; overflow-x: auto; white-space: pre;
+  }
+  .term pre .c { color: #64748b; }
+  .term pre .p { color: #34d399; }
+
+  .out {
+    background: #0b1222; border: 1px solid #243044; border-left: 3px solid var(--ok);
+    border-radius: 8px; padding: 10px 13px; margin: 8px 0;
+    font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; color: #a7f3d0;
+    white-space: pre-wrap; overflow-x: auto;
+  }
+  .out.warn { border-left-color: var(--warn); color: #fde68a; }
+  .out.bad { border-left-color: var(--bad); color: #fecdd3; }
+
+  .note, .warnbox, .tipbox {
+    border-radius: 9px; padding: 11px 14px; margin: 12px 0; font-size: 12.5px; border: 1px solid;
+  }
+  .note { background: rgba(14,165,233,.07); border-color: rgba(14,165,233,.3); color: #bae6fd; }
+  .warnbox { background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.35); color: #fde68a; }
+  .tipbox { background: rgba(16,185,129,.07); border-color: rgba(16,185,129,.3); color: #bbf7d0; }
+  .note b, .warnbox b, .tipbox b { color: #fff; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 12px 0; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .45px; color: var(--muted); font-weight: 600; }
+  td code, th code { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; color: #a5f3fc; }
+  tr:last-child td { border-bottom: none; }
+  .scroll { overflow-x: auto; scrollbar-width: thin; scrollbar-color: #475569 #0f172a; padding-bottom: 2px; }
+  .scroll::-webkit-scrollbar { height: 8px; }
+  .scroll::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
+  .scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+  @media (max-width: 700px) { .scroll table { min-width: 620px; } .scroll { border-bottom: 1px solid #2a3850; } }
+
+  .checklist { list-style: none; padding: 0; margin: 12px 0; }
+  .checklist li {
+    display: flex; gap: 10px; align-items: flex-start; padding: 9px 12px; margin: 6px 0;
+    background: var(--card2); border: 1px solid #2a3850; border-radius: 8px; font-size: 12.8px;
+  }
+  .checklist .box {
+    width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid #475569;
+    flex: none; margin-top: 2px;
+  }
+
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 780px) { .twocol { grid-template-columns: 1fr; } }
+
+  .cmdgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 780px) { .cmdgrid { grid-template-columns: 1fr; } }
+  .cmdcard { background: var(--card2); border: 1px solid #2a3850; border-radius: 10px; padding: 12px 14px; }
+  .cmdcard .t { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted2); margin-bottom: 5px; }
+  .cmdcard code { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; color: #a5f3fc; word-break: break-all; }
+
+  footer { border-top: 1px solid var(--border); background: var(--card); padding: 18px 0; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--muted2); }
+  .toplink { font-size: 11px; color: var(--muted2); }
+  @media print {
+    body { background: #fff; color: #111; }
+    header, footer, nav.top { display: none; }
+    section { border: 1px solid #ccc; break-inside: avoid; background: #fff; }
+    section p, li, td { color: #222; }
+    .term, .out { border-color: #ccc; background: #f7f7f7; color: #111; }
+    .term pre { color: #111; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hd">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 19V6a2 2 0 0 1 2-2h9l5 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 4v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+      </div>
+      <div>
+        <b>Sıfırdan Çalıştırma Kılavuzu</b>
+        <span>DentSync · MSSQL + Python API senkronizasyonu</span>
+      </div>
+    </div>
+    <nav class="top">
+      <a href="/dashboard">Panel</a>
+      <a href="/kilavuz" class="active">Kılavuz</a>
+      <a href="/mimari">Mimari</a>
+      <a href="/docs" target="_blank" rel="noopener">API Docs</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div class="badge">ADIM ADIM · SIFIRDAN ÜRETİME HAZIR DEMO</div>
+    <h1>Bilgisayarınızda hiçbir şey kurulu değilmiş gibi başlayın</h1>
+    <p class="lede">
+      Bu kılavuz; Python, SQL Server, ODBC sürücüsü, sanal ortam, veritabanı, sentetik veri,
+      iki API ve senkronizasyonun sırayla nasıl kurulacağını gösterir. Her komutun hangi
+      terminalde çalıştırılacağı, ne yapacağı ve <b>beklenen çıktısı</b> yazılıdır.
+      Komutları sırayla uygulayın; bir adım başarısızsa sonraki adıma geçmeyin.
+    </p>
+    <div class="facts">
+      <div class="fact"><div class="k">Süre</div><div class="v">~20–35 dk</div></div>
+      <div class="fact"><div class="k">Terminal</div><div class="v">3 PowerShell</div></div>
+      <div class="fact"><div class="k">Portlar</div><div class="v">8000 · 8001</div></div>
+      <div class="fact"><div class="k">Yönetici izni</div><div class="v">Yalnızca SQL kurulumu</div></div>
+    </div>
+  </div>
+
+  <!-- 0 -->
+  <section id="ozet">
+    <h2><span class="num">0</span> Büyük resim: neyi çalıştırıyoruz?</h2>
+    <p>Kurulum sonunda üç ayrı süreç çalışıyor olacak. Birbirlerini HTTP üzerinden çağırırlar:</p>
+    <div class="scroll">
+      <table>
+        <tr><th>Pencere</th><th>Ne çalışır</th><th>Adres</th><th>Görevi</th></tr>
+        <tr><td>1</td><td>Kaynak API (mock)</td><td><code>http://127.0.0.1:8001</code></td><td>Gerçek bir dış sistem gibi sentetik klinik/hasta/randevu verisi sunar.</td></tr>
+        <tr><td>2</td><td>Hedef API + panel</td><td><code>http://127.0.0.1:8000</code></td><td>MSSQL'deki veriyi okur, REST olarak sunar; paneli barındırır.</td></tr>
+        <tr><td>3</td><td>Senkronizasyon</td><td>—</td><td>Kaynaktan veriyi çeker, doğrular, MSSQL'e yazar. Elle veya zamanlayıcıyla çalışır.</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <b>Neden üç süreç?</b> Gerçek hayatta kaynak sistem sizin değildir ve ayrı bir sunucuda çalışır.
+      Bu ayrımı korumak, ileride sahte API'yi gerçek bir API ile değiştirmeyi tek satırlık
+      <code class="inl">SOURCE_API_URL</code> değişikliğine indirir.
+    </div>
+  </section>
+
+  <!-- 1 -->
+  <section id="gereksinim">
+    <h2><span class="num">1</span> Ön koşullar ve ortam kontrolü</h2>
+    <p>Aşağıdaki komutları <b>PowerShell</b> içinde çalıştırın. Hiçbiri yönetici izni istemez.</p>
+
+    <h3>1.1 Python</h3>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>kontrol</span></div><pre>python --version</pre></div>
+    <div class="out">Python 3.12.5</div>
+    <p>3.10 – 3.13 arası sürümler uygundur. Komut bulunamazsa Python'u
+      <a href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener">python.org</a>'dan kurun ve
+      kurulumda <b>"Add python.exe to PATH"</b> kutusunu işaretleyin. Kurulumdan sonra terminali kapatıp açın.</p>
+
+    <h3>1.2 SQL Server: iki seçenek</h3>
+    <p>Proje standart bir MSSQL veritabanı kullanır. İki yoldan biri yeterlidir:</p>
+    <div class="scroll">
+      <table>
+        <tr><th>Seçenek</th><th>Sunucu adı</th><th>Ne zaman?</th><th>Yönetici izni</th></tr>
+        <tr><td><b>A. SQL Server Express 2022</b></td><td><code>.\SQLEXPRESS</code></td><td>Gerçek bir sunucu deneyimi istiyorsanız (önerilen).</td><td>Kurulumda gerekir.</td></tr>
+        <tr><td><b>B. SQL Server LocalDB</b></td><td><code>(localdb)\MSSQLLocalDB</code></td><td>Visual Studio / SQL araçlarıyla birlikte geldiyse, hızlı deneme için.</td><td>Gerekmez.</td></tr>
+      </table>
+    </div>
+
+    <h3>1.3 SQL Server var mı? (kontrol)</h3>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>servis + LocalDB</span></div><pre><span class="c"># SQL Server servisleri</span>
+Get-Service | Where-Object {$_.Name -like '*SQL*'} | Select-Object Status,Name,DisplayName
+
+<span class="c"># LocalDB kurulu mu?</span>
+sqllocaldb info</pre></div>
+    <p><b>Yorumlama:</b></p>
+    <ul>
+      <li><code class="inl">MSSQL$SQLEXPRESS</code> ve durumu <code class="inl">Running</code> → Seçenek A hazır.</li>
+      <li><code class="inl">sqllocaldb info</code> çıktısında <code class="inl">MSSQLLocalDB</code> → Seçenek B hazır (başlatmak için <code class="inl">sqllocaldb start MSSQLLocalDB</code>).</li>
+      <li>Hiçbiri yoksa 1.4'ü uygulayın.</li>
+    </ul>
+
+    <h3>1.4 SQL Server Express 2022 kurulumu (yönetici izni gerekir)</h3>
+    <ol>
+      <li>Microsoft'un resmî indirme sayfasından <b>SQL Server 2022 Express</b> kurulumunu indirin.</li>
+      <li>Kurulum türü olarak <b>Basic</b> seçin. Örnek (instance) adı <code class="inl">SQLEXPRESS</code> olsun.</li>
+      <li>Kurulum bitince <code class="inl">services.msc</code> açın → <code class="inl">SQL Server (SQLEXPRESS)</code> servisinin <b>Running</b> olduğunu doğrulayın.</li>
+      <li>Sunucu adı olarak <code class="inl">.\SQLEXPRESS</code> kullanılacak. Windows Authentication varsayılan ve yeterlidir.</li>
+    </ol>
+    <div class="warnbox">
+      <b>Bu adımı sizin yapmanız gerekir.</b> Yönetici izni olmadan kurulum yapılamaz. Kurulum bittikten sonra
+      kılavuzun geri kalanına devam edin; proje tarafında ek bir işlem gerekmez.
+    </div>
+
+    <h3>1.5 ODBC sürücüsü</h3>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>kurulu sürücüler</span></div><pre>Get-OdbcDriver | Where-Object {$_.Name -like '*SQL Server*'} | Select-Object Name,Platform</pre></div>
+    <div class="out">ODBC Driver 17 for SQL Server   64-bit
+ODBC Driver 18 for SQL Server   64-bit</div>
+    <p>En az bir sürücü görünmelidir. Hiçbiri yoksa
+      <a href="https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server" target="_blank" rel="noopener">Microsoft ODBC Driver 18 for SQL Server</a>
+      kurun (yönetici izni gerekir). Kurduğunuz sürücünün adını <code class="inl">.env</code> içine aynen yazacaksınız.</p>
+    <div class="note">
+      <b>17 mi 18 mi?</b> Kod ikisiyle de çalışır. 18'de şifreleme varsayılan olarak zorunludur.
+      Eski LocalDB + 17 kombinasyonunda "Encryption not supported" hatası alırsanız 6. adımdaki
+      <code class="inl">DB_ENCRYPT=false</code> ayarını kullanın.
+    </div>
+
+    <h3>1.6 SSMS (isteğe bağlı)</h3>
+    <p>Veriyi gözle görmek için <b>SQL Server Management Studio</b> kurun. Zorunlu değildir; panel ve API'ler
+      veriyi zaten gösterir. SSMS'te <code class="inl">.\SQLEXPRESS</code> veya
+      <code class="inl">(localdb)\MSSQLLocalDB</code> sunucusuna <b>Windows Authentication</b> ile bağlanın.</p>
+  </section>
+
+  <!-- 2 -->
+  <section id="proje">
+    <h2><span class="num">2</span> Projeyi edinin ve klasöre girin</h2>
+    <p>Depoyu klonlayın (veya ZIP olarak indirip açın):</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>klonlama</span></div><pre>cd C:\Users\&lt;kullanici&gt;\Desktop
+git clone https://github.com/Enke-bit/canli_veri.git
+cd canli_veri</pre></div>
+    <div class="note">
+      Klasör adı sizin deponuzda <code class="inl">canli_veri</code> olabilir; bu kılavuzda
+      <code class="inl">MssqlPythonSync</code> yazsa da <b>kendi klasörünüzün yolunu</b> kullanın.
+      Tüm komutlar proje kökünde çalıştırılır.
+    </div>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>doğru klasörde misiniz?</span></div><pre>Get-ChildItem</pre></div>
+    <div class="out">app  data  logs  mock_source  scripts  sql  tests  .env.example  .gitignore  README.md  requirements.txt</div>
+    <p><code class="inl">app</code>, <code class="inl">mock_source</code>, <code class="inl">scripts</code> ve
+      <code class="inl">requirements.txt</code> görünüyorsa doğru yerdesiniz.</p>
+  </section>
+
+  <!-- 3 -->
+  <section id="venv">
+    <h2><span class="num">3</span> Sanal ortam ve paketler</h2>
+    <p>Sanal ortam (venv), projenin paketlerini bilgisayarın geri kalanından ayırır. Böylece başka bir
+      projenin paket sürümü bu projeyi bozmaz.</p>
+    <div class="term"><div class="term-head"><span>PowerShell · proje kökü</span><span>venv oluştur</span></div><pre>python -m venv .venv</pre></div>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>paketleri kur</span></div><pre>.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt</pre></div>
+    <div class="out">Successfully installed Faker-30.3.0 SQLAlchemy-2.0.29 fastapi-0.115.0 httpx-0.27.0
+pydantic-2.14.1 pyodbc-5.2.0 pytest-8.3.3 python-dotenv-1.0.1 uvicorn-0.32.0 ...</div>
+    <p>Kurulum ~1–2 dakika sürer. <code class="inl">pyodbc</code> Windows için hazır tekerlek (wheel) olarak
+      gelir; derleyici gerekmez.</p>
+    <div class="note">
+      <b>Neden <code class="inl">.\.venv\Scripts\python.exe</code>?</b> Bu yol, komutu etkinleştirme adımına
+      gerek kalmadan doğrudan sanal ortamdaki Python ile çalıştırır. İsterseniz
+      <code class="inl">.\.venv\Scripts\Activate.ps1</code> ile etkinleştirip <code class="inl">python ...</code>
+      de yazabilirsiniz. "Script çalıştırma devre dışı" hatası alırsanız:
+      <code class="inl">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass</code>.
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="env">
+    <h2><span class="num">4</span> Yapılandırma: <code class="inl">.env</code></h2>
+    <p>Ayarlar kodun içinde değil, <code class="inl">.env</code> dosyasındadır. Şablonu kopyalayın:</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>şablonu kopyala</span></div><pre>Copy-Item .env.example .env</pre></div>
+    <p>Şimdi <code class="inl">.env</code> dosyasını VS Code veya Not Defteri ile açıp <b>kendi ortamınıza</b> göre düzenleyin:</p>
+    <div class="term"><div class="term-head"><span>.env</span><span>Seçenek A · SQL Server Express</span></div><pre>DB_SERVER=.\SQLEXPRESS
+DB_DATABASE=DentSyncDemo
+DB_DRIVER=ODBC Driver 18 for SQL Server
+DB_TRUSTED_CONNECTION=true
+DB_ENCRYPT=true
+DB_TRUST_SERVER_CERTIFICATE=true</pre></div>
+    <div class="term"><div class="term-head"><span>.env</span><span>Seçenek B · LocalDB (bu makinede test edilen)</span></div><pre>DB_SERVER=(localdb)\MSSQLLocalDB
+DB_DATABASE=DentSyncDemo
+DB_DRIVER=ODBC Driver 17 for SQL Server
+DB_TRUSTED_CONNECTION=true
+DB_ENCRYPT=false
+DB_TRUST_SERVER_CERTIFICATE=true</pre></div>
+    <div class="warnbox">
+      <b>Şifreleme tuzağı.</b> <code class="inl">DB_ENCRYPT=true</code> üretimde doğru ayardır. Eski ODBC 17 +
+      LocalDB kombinasyonunda <code class="inl">"Encryption not supported on SQL Server"</code> hatası verirse
+      <b>yalnızca yerel geliştirmede</b> <code class="inl">false</code> yapın. Gerçek sunucuda sertifika
+      doğrulanmalıdır (<code class="inl">DB_TRUST_SERVER_CERTIFICATE=false</code>).
+    </div>
+
+    <h3>4.1 Tüm ayarlar</h3>
+    <div class="scroll">
+      <table>
+        <tr><th>Değişken</th><th>Varsayılan</th><th>Açıklama</th></tr>
+        <tr><td><code>DB_SERVER</code></td><td><code>.\SQLEXPRESS</code></td><td>SQL Server örnek adı. LocalDB için <code>(localdb)\MSSQLLocalDB</code>.</td></tr>
+        <tr><td><code>DB_DATABASE</code></td><td><code>DentSyncDemo</code></td><td>Veritabanı adı. Yoksa <code>init_db.py</code> oluşturur.</td></tr>
+        <tr><td><code>DB_DRIVER</code></td><td><code>ODBC Driver 18 for SQL Server</code></td><td>Kurulu sürücünün <b>tam adı</b>.</td></tr>
+        <tr><td><code>DB_TRUSTED_CONNECTION</code></td><td><code>true</code></td><td>Windows Authentication. <code>false</code> ise kullanıcı/parola gerekir.</td></tr>
+        <tr><td><code>DB_ENCRYPT</code></td><td><code>true</code></td><td>Bağlantıyı şifreler. Yerel eski sürücüde <code>false</code> gerekebilir.</td></tr>
+        <tr><td><code>DB_TRUST_SERVER_CERTIFICATE</code></td><td><code>true</code></td><td>Yerel self-signed sertifikayı kabul eder. Üretimde <code>false</code>.</td></tr>
+        <tr><td><code>DB_USERNAME</code>, <code>DB_PASSWORD</code></td><td>boş</td><td>Yalnızca SQL Authentication kullanıyorsanız. <b>Gerçek parolayı repoya koymayın.</b></td></tr>
+        <tr><td><code>SOURCE_API_URL</code></td><td><code>http://127.0.0.1:8001</code></td><td>Senkronizasyonun veri çektiği adres. Gerçek API'ye geçişte değişir.</td></tr>
+        <tr><td><code>SOURCE_DATA_FILE</code></td><td><code>data/synthetic_source.json</code></td><td>Mock API'nin veri dosyası.</td></tr>
+        <tr><td><code>SYNC_PAGE_SIZE</code></td><td><code>200</code></td><td>Sayfa başına kayıt. Büyük veride 500'e çıkarılabilir.</td></tr>
+        <tr><td><code>SYNC_OVERLAP_SECONDS</code></td><td><code>120</code></td><td>Zaman sınırında kayıt kaçmaması için geriye örtüşme.</td></tr>
+        <tr><td><code>HTTP_MAX_RETRIES</code></td><td><code>4</code></td><td>429/5xx/timeout için deneme sayısı. Sonsuz döngü yok.</td></tr>
+        <tr><td><code>ENABLE_SYNC_TRIGGER</code></td><td><code>true</code></td><td>Panelden <code>POST /api/v1/sync/run</code> iznini açar.</td></tr>
+        <tr><td><code>LOG_LEVEL</code></td><td><code>INFO</code></td><td><code>DEBUG</code> ayrıntılı log verir.</td></tr>
+      </table>
+    </div>
+    <div class="tipbox">
+      <b>Güvenlik:</b> <code class="inl">.env</code> <code class="inl">.gitignore</code> içindedir ve depoya
+      gönderilmez. Parola/anahtar paylaşmayın; <code class="inl">.env.example</code> içine gerçek sır yazmayın.
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section id="veritabani">
+    <h2><span class="num">5</span> Veritabanı ve şema</h2>
+    <p>Bu komut veritabanını (yoksa) oluşturur ve tabloları kurar. <b>Yıkıcı değildir:</b> var olan tablolara
+      ve veriye dokunmaz.</p>
+    <div class="term"><div class="term-head"><span>PowerShell · proje kökü</span><span>kurulum</span></div><pre>.\.venv\Scripts\python.exe scripts\init_db.py</pre></div>
+    <div class="out">INFO | init_db | Baglanti hedefi: {'server': '(localdb)\\MSSQLLocalDB', 'database': 'DentSyncDemo', ...}
+INFO | init_db | Veritabani olusturuldu: DentSyncDemo
+INFO | init_db | Sema betigi uygulandi (16 parti).
+INFO | init_db | Mevcut tablolar: Appointments, Clinics, Patients, SyncLog, SyncState
+INFO | init_db |   Clinics        0 satir
+INFO | init_db |   Patients       0 satir
+INFO | init_db |   Appointments   0 satir
+INFO | init_db |   SyncState      0 satir
+INFO | init_db |   SyncLog        0 satir
+INFO | init_db | Veritabani hazir: DentSyncDemo</div>
+    <p>Yalnızca durumu görmek için (hiçbir şey oluşturmaz):</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>salt kontrol</span></div><pre>.\.venv\Scripts\python.exe scripts\init_db.py --check-only</pre></div>
+
+    <h3>5.1 Sık karşılaşılan iki hata</h3>
+    <div class="scroll">
+      <table>
+        <tr><th>Hata</th><th>Neden</th><th>Çözüm</th></tr>
+        <tr><td><code>Encryption not supported on SQL Server</code></td><td>Eski sürücü + şifreleme zorunlu</td><td><code>.env</code> → <code>DB_ENCRYPT=false</code> (yalnızca yerel) veya ODBC 18 kurun.</td></tr>
+        <tr><td><code>ODBC surucusu bulunamadi</code></td><td><code>DB_DRIVER</code> adı kurulu sürücüyle eşleşmiyor</td><td>1.5'teki komutla tam adı kopyalayın; 17/18 farkını kontrol edin.</td></tr>
+        <tr><td><code>Cannot open database "DentSyncDemo"</code></td><td>Kullanıcının oluşturma izni yok</td><td>SSMS'te kullanıcıya <code>dbcreator</code> rolü verin veya veritabanını DBA oluştursun.</td></tr>
+        <tr><td><code>Login failed for user</code></td><td>Windows Authentication kapalı / yanlış sunucu</td><td><code>DB_SERVER</code> ve SSMS bağlantısını kontrol edin.</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="veri">
+    <h2><span class="num">6</span> Sentetik veriyi üretin</h2>
+    <p>Bu adım 3 klinik, 500 hasta ve 2.000 randevu içeren JSON dosyasını üretir. Tüm veri sentetiktir:
+      e-postalar <code class="inl">@example.test</code>, telefonlar <code class="inl">TEST_PHONE_000001</code>.</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>ilk üretim</span></div><pre>.\.venv\Scripts\python.exe scripts\generate_synthetic_data.py</pre></div>
+    <div class="out">Sentetik veri olusturuldu: C:\...\data\synthetic_source.json
+  3 klinik, 500 hasta, 2000 randevu (seed=42)
+Dogrulama: BASARILI</div>
+    <p>Dosyanın gerçekten tutarlı olduğunu doğrulayın:</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>doğrulama</span></div><pre>.\.venv\Scripts\python.exe scripts\generate_synthetic_data.py --validate-only</pre></div>
+    <div class="out">DOGRULAMA BASARILI: ...\data\synthetic_source.json
+Kayitlar: 3 klinik, 500 hasta, 2000 randevu</div>
+
+    <h3>6.1 Yeniden üretmek isterseniz</h3>
+    <p>Dosya zaten varsa üretici <b>üzerine yazmaz</b>:</p>
+    <div class="out warn">HATA: Dosya zaten var: ...\synthetic_source.json. Uzerine yazmak icin --force kullanin.</div>
+    <p>Bilinçli olarak yeniden üretmek için (önce <code class="inl">data/backups/</code> altına yedek alır):</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>yedekli yeniden üretim</span></div><pre>.\.venv\Scripts\python.exe scripts\generate_synthetic_data.py --force</pre></div>
+    <div class="note">
+      Aynı <code class="inl">--seed</code> ve aynı <code class="inl">--as-of</code> tarihi <b>aynı</b> veri setini
+      üretir; bu testlerin tekrarlanabilir olmasını sağlar. Farklı boyut için:
+      <code class="inl">--patients 50 --appointments 200</code>.
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section id="api">
+    <h2><span class="num">7</span> Kaynak API'yi başlatın (Pencere 1)</h2>
+    <p><b>Yeni bir PowerShell penceresi</b> açın, proje köküne gidin ve çalıştırın:</p>
+    <div class="term"><div class="term-head"><span>PowerShell · Pencere 1</span><span>kaynak API</span></div><pre>cd C:\Users\&lt;kullanici&gt;\Desktop\canli_veri
+.\scripts\run_source_api.ps1</pre></div>
+    <div class="out">Kaynak API: http://127.0.0.1:8001  (dokumantasyon: /docs)
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)</div>
+    <p>Alternatif (betik kullanmadan):</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>doğrudan</span></div><pre>.\.venv\Scripts\python.exe -m uvicorn mock_source.main:app --host 127.0.0.1 --port 8001</pre></div>
+    <p><b>Tarayıcıda doğrulayın:</b> <a href="http://127.0.0.1:8001/health" target="_blank" rel="noopener">http://127.0.0.1:8001/health</a></p>
+    <div class="out">{"status":"ok","service":"mock-source-api","source_data_loaded":true,
+ "counts":{"clinics":3,"patients":500,"appointments":2000}}</div>
+    <div class="warnbox">
+      <b>Bu pencereyi kapatmayın.</b> Kapatırsanız senkronizasyon "Kaynak API'ye ulaşılamadı" hatası verir
+      (bu normaldir ve checkpoint ilerlemez). Ayrıca <code class="inl">status: degraded</code> görürseniz
+      sentetik veri dosyası yok demektir → 6. adımı çalıştırın.
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section id="hedef">
+    <h2><span class="num">8</span> Hedef API ve paneli başlatın (Pencere 2)</h2>
+    <p><b>İkinci bir PowerShell penceresi</b> açın:</p>
+    <div class="term"><div class="term-head"><span>PowerShell · Pencere 2</span><span>hedef API</span></div><pre>cd C:\Users\&lt;kullanici&gt;\Desktop\canli_veri
+.\scripts\run_target_api.ps1</pre></div>
+    <div class="out">Hedef API: http://127.0.0.1:8000  (dokumantasyon: /docs)
+Panel    : http://127.0.0.1:8000/dashboard
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)</div>
+    <p><b>Doğrulama:</b> <a href="http://127.0.0.1:8000/health" target="_blank" rel="noopener">http://127.0.0.1:8000/health</a></p>
+    <div class="out">{"status":"ok","database":{"status":"ok","name":"DentSyncDemo"},"service":"target-api",...}</div>
+    <p><code class="inl">database.status</code> <b>ok</b> değilse MSSQL bağlantısı kurulmamıştır; 4 ve 5. adımlara dönün.
+      Bu aşamada panel açılır ama tablolar boş olduğu için metrikler <code class="inl">0</code> / <code class="inl">—</code> görünür.</p>
+  </section>
+
+  <!-- 9 -->
+  <section id="senkron">
+    <h2><span class="num">9</span> İlk senkronizasyon (Pencere 3)</h2>
+    <p><b>Üçüncü bir PowerShell penceresi</b> açın. Bu komut tek seferlik çalışır ve biter:</p>
+    <div class="term"><div class="term-head"><span>PowerShell · Pencere 3</span><span>ilk aktarım</span></div><pre>cd C:\Users\&lt;kullanici&gt;\Desktop\canli_veri
+.\.venv\Scripts\python.exe scripts\sync_api_to_mssql.py</pre></div>
+    <div class="out">Senkronizasyon basladi. job_id=...
+==============================================================
+Senkronizasyon job_id: 0f3c...-...
+Durum               : BASARILI
+--------------------------------------------------------------
+Tur             Okunan  Eklenen  Guncel  Silinen  Hata
+clinics              3        3       0        0     0
+patients           500      500       0        0     0
+appointments      2000     2000       0        0     0
+==============================================================
+Ayrinti: logs/sync.log ve dbo.SyncLog tablosu</div>
+    <p><b>İkinci kez çalıştırın — mükerrer kayıt oluşmamalı:</b></p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>idempotency kanıtı</span></div><pre>.\.venv\Scripts\python.exe scripts\sync_api_to_mssql.py</pre></div>
+    <div class="out">Tur             Okunan  Eklenen  Guncel  Silinen  Hata
+clinics              0        0       0        0     0
+patients             0        0       0        0     0
+appointments         0        0       0        0     0</div>
+    <p>Bu çıktı <b>upsert + checkpoint</b> mekanizmasının çalıştığını gösterir. Satır sayıları değişmediyse
+      mükerrer kayıt yoktur. Kontrol:</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>satır sayıları</span></div><pre>.\.venv\Scripts\python.exe scripts\init_db.py --check-only</pre></div>
+    <div class="out">INFO | init_db |   Clinics        3 satir
+INFO | init_db |   Patients       500 satir
+INFO | init_db |   Appointments   2000 satir
+INFO | init_db |   SyncState      3 satir
+INFO | init_db |   SyncLog        6 satir</div>
+
+    <h3>9.1 Değişiklik senaryosu (elle)</h3>
+    <p>Kurulumun gerçekten çalıştığını <b>veri değiştirerek</b> kanıtlayın:</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>1) kaynakta iptal et</span></div><pre>Invoke-RestMethod -Method Post http://127.0.0.1:8001/source/appointments/APT-000002/cancel</pre></div>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>2) senkronize et</span></div><pre>.\.venv\Scripts\python.exe scripts\sync_api_to_mssql.py</pre></div>
+    <div class="out">appointments         1        0       1        0     0</div>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>3) hedef API'den doğrula</span></div><pre>Invoke-RestMethod http://127.0.0.1:8000/api/v1/appointments/APT-000002</pre></div>
+    <div class="out">external_appointment_id : APT-000002
+status                  : Cancelled</div>
+    <p>Aynı akışı panelden de yapabilirsiniz (10. adım).</p>
+
+    <h3>9.2 Çıkış kodları</h3>
+    <div class="scroll">
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th><th>Ne yapmalı?</th></tr>
+        <tr><td><code>0</code></td><td>Başarılı</td><td>—</td></tr>
+        <tr><td><code>1</code></td><td>Senkronizasyon hatası (SyncLog = Failed)</td><td><code>logs\sync.log</code> ve panelin akışını inceleyin.</td></tr>
+        <tr><td><code>2</code></td><td>MSSQL bağlantı/yapılandırma hatası</td><td><code>.env</code>, servis, sürücü kontrolü (5.1).</td></tr>
+        <tr><td><code>3</code></td><td>Başka bir senkronizasyon çalışıyor</td><td><code>logs\sync.lock</code>; çalışan işlem yoksa silin.</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="panel">
+    <h2><span class="num">10</span> Paneli açın ve doğrulayın</h2>
+    <p>Tarayıcıda: <b><a href="http://127.0.0.1:8000/dashboard" target="_blank" rel="noopener">http://127.0.0.1:8000/dashboard</a></b></p>
+    <p>Görmeniz gerekenler:</p>
+    <ul class="checklist">
+      <li><span class="box"></span><span>Üst şerit: <b>“Canlı · iki API çevrimiçi”</b>, kaynak API'de 3/500/2000.</span></li>
+      <li><span class="box"></span><span>Hedef API: <b>“Çevrimiçi · MSSQL”</b> ve <code class="inl">DB: DentSyncDemo</code>.</span></li>
+      <li><span class="box"></span><span>Metrikler: 3 klinik, 500 hasta, 2.000 randevu.</span></li>
+      <li><span class="box"></span><span>Durum grafiği: Scheduled/Confirmed/Completed/Cancelled dilimleri.</span></li>
+      <li><span class="box"></span><span>Senkronizasyon başarısı: <b>%100</b> (ilk kurulumda başarısız tur yoksa).</span></li>
+      <li><span class="box"></span><span>Canlı akışta son <code class="inl">SyncLog</code> kayıtları.</span></li>
+    </ul>
+    <div class="warnbox">
+      Panelde <b>sahte veri yoktur</b>. Hedef API kapalıysa kırmızı uyarı çıkar ve metrikler
+      <code class="inl">—</code> olur; bu bir hata değil, dürüst davranıştır. Veri görünmüyorsa
+      9. adımı çalıştırıp sayfayı yenileyin.
+    </div>
+    <p>Panelin altındaki <b>“Uçtan uca deneme”</b> bölümünde bir randevu seçip:</p>
+    <ol>
+      <li><b>Kaynakta iptal et</b> → kaynak API'de iptal + otomatik senkronizasyon + hedef API doğrulaması.</li>
+      <li><b>Kaynakta işlem türünü değiştir</b> → güncelleme + senkronizasyon.</li>
+      <li><b>Senkronize et</b> → yalnızca senkronizasyon.</li>
+      <li><b>Hedef API'de Confirmed yap</b> → MSSQL'de durum değişikliği (kaynak sonra gönderirse kaynak kazanır).</li>
+    </ol>
+  </section>
+
+  <!-- 11 -->
+  <section id="test">
+    <h2><span class="num">11</span> Otomatik testler</h2>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>tüm testler</span></div><pre>.\.venv\Scripts\python.exe -m pytest tests -q</pre></div>
+    <div class="out">...............................................................  [100%]
+63 passed, 3 warnings in 5.72s</div>
+    <p>Testler iki katmandır:</p>
+    <ul>
+      <li><b>Saf Python testleri</b> (sentetik veri, kaynak API) her ortamda çalışır.</li>
+      <li><b>MSSQL entegrasyon testleri</b> ayrı bir <code class="inl">DentSyncTest</code> veritabanı kullanır.
+        SQL Server yoksa otomatik <b>skip</b> olur; <code class="inl">DentSyncDemo</code> verinize dokunmaz.</li>
+    </ul>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>yalnızca hızlı testler</span></div><pre>.\.venv\Scripts\python.exe -m pytest tests\test_synthetic_data.py tests\test_source_api.py -q</pre></div>
+  </section>
+
+  <!-- 12 -->
+  <section id="otomasyon">
+    <h2><span class="num">12</span> Sürekli çalışma: Windows Task Scheduler</h2>
+    <p>Kaynak API ve MSSQL açıkken senkronizasyonu her 5 dakikada bir otomatik çalıştırın.
+      <b>Yönetici izni gerekmez</b>; görev yalnızca sizin kullanıcınız için oluşturulur.</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>görevi kur + hemen bir kez çalıştır</span></div><pre>.\scripts\register_sync_task.ps1 -IntervalMinutes 5 -RunNow</pre></div>
+    <div class="out">Gorev adi : DentSync - API to MSSQL
+Komut     : "C:\...\.venv\Scripts\python.exe" "C:\...\scripts\sync_api_to_mssql.py"
+Aralik    : her 5 dakika
+SUCCESS: The scheduled task "DentSync - API to MSSQL" has successfully been created.</div>
+    <p>Kontrol ve kaldırma:</p>
+    <div class="term"><div class="term-head"><span>PowerShell</span><span>görev yönetimi</span></div><pre>schtasks /Query /TN "DentSync - API to MSSQL" /V /FO LIST
+.\scripts\unregister_sync_task.ps1</pre></div>
+    <div class="note">
+      Görev yalnızca <b>oturum açıkken</b> çalışır. Bilgisayar uykuya girerse çalışmaz; uyandığında
+      sonraki tetikleme devreye girer. Kaçan veri olmaz, çünkü checkpoint kaybolmaz ve örtüşme penceresi vardır.
+    </div>
+
+    <h3>12.1 Görev çalışırken ne oluyor?</h3>
+    <div class="scroll">
+      <table>
+        <tr><th>Durum</th><th>Sistem davranışı</th></tr>
+        <tr><td>Kaynak API kapalı</td><td>Sınırlı retry → <code>SyncLog = Failed</code>, çıkış kodu 1. Checkpoint ilerlemez. API açılınca sonraki tur tüm bekleyen veriyi alır.</td></tr>
+        <tr><td>MSSQL erişilemez</td><td>Çıkış kodu 2, net bağlantı hatası. Hiçbir iş “başarılı” yazılmaz.</td></tr>
+        <tr><td>Önceki tur bitmedi</td><td><code>logs\sync.lock</code> nedeniyle yeni tur başlamaz (çıkış kodu 3). Kilit 1 saatten eskiyse otomatik devralınır.</td></tr>
+        <tr><td>Aktarım yarıda kaldı</td><td>Sayfa transaction'ı geri alınır; o türün checkpoint'i ilerlemez; sonraki tur aynı veriyi yeniden işler (upsert güvenli).</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section id="durdur">
+    <h2><span class="num">13</span> Günlük kullanım: başlat / durdur</h2>
+    <div class="twocol">
+      <div>
+        <h3>Başlatma sırası</h3>
+        <ol>
+          <li>MSSQL servisi çalışıyor mu? (<code class="inl">Get-Service *SQL*</code>)</li>
+          <li>Pencere 1: <code class="inl">.\scripts\run_source_api.ps1</code></li>
+          <li>Pencere 2: <code class="inl">.\scripts\run_target_api.ps1</code></li>
+          <li>Gerekiyorsa: <code class="inl">.\scripts\run_sync.ps1</code></li>
+          <li>Panel: <code class="inl">/dashboard</code></li>
+        </ol>
+      </div>
+      <div>
+        <h3>Durdurma sırası</h3>
+        <ol>
+          <li>Zamanlanmış görev varsa: <code class="inl">.\scripts\unregister_sync_task.ps1</code></li>
+          <li>API pencerelerinde <code class="inl">Ctrl + C</code></li>
+          <li>Takılı kilit varsa: <code class="inl">logs\sync.lock</code> dosyasını silin</li>
+          <li>Veritabanı <b>silinmez</b>; durdurmak veri kaybı yaratmaz.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="warnbox">
+      API'ler yalnızca <code class="inl">127.0.0.1</code> üzerinde dinler ve <b>kimlik doğrulama yoktur</b>.
+      Bu bir demo ortamıdır; internete açık sunucuya taşımayın. Üretim için kılavuzun sonundaki güvenlik notlarına bakın.
+    </div>
+  </section>
+
+  <!-- 14 -->
+  <section id="sorun">
+    <h2><span class="num">14</span> Sorun giderme</h2>
+    <div class="scroll">
+      <table>
+        <tr><th>Belirti</th><th>Olası neden</th><th>Çözüm</th></tr>
+        <tr><td>Panel açılmıyor, <code>{"detail":"Not Found"}</code></td><td>Hedef API eski kodla çalışıyor</td><td>Pencereyi kapatıp <code>run_target_api.ps1</code> ile yeniden başlatın.</td></tr>
+        <tr><td>Panelde tüm metrikler <code>—</code></td><td>Hedef API kapalı veya MSSQL bağlantısı yok</td><td><code>/health</code> kontrolü; 4–5. adımlar.</td></tr>
+        <tr><td>Kaynak API <code>degraded</code></td><td>Sentetik veri dosyası yok</td><td>6. adımı çalıştırın.</td></tr>
+        <tr><td><code>Baska bir senkronizasyon calisiyor</code></td><td>Kilit dosyası kalmış</td><td>Çalışan işlem yoksa <code>logs\sync.lock</code> silin (1 saat sonra otomatik devralınır).</td></tr>
+        <tr><td><code>Port 8000 kullanimda</code></td><td>Eski/başka süreç aynı portta</td><td><code>Get-NetTCPConnection -LocalPort 8000</code> → süreci kapatın veya <code>--port 8010</code> kullanın.</td></tr>
+        <tr><td><code>Kaynak API'ye ulasilamadi</code></td><td>Pencere 1 kapalı / yanlış URL</td><td>Kaynak API'yi başlatın; <code>SOURCE_API_URL</code> kontrolü.</td></tr>
+        <tr><td><code>Hasta kayitlari icin klinik bulunamadi</code></td><td>Kaynak veri tutarsız / yarım senkron</td><td><code>--validate-only</code>; gerekirse <code>--force</code> ile yeniden üretip tam senkron (<code>--full</code>).</td></tr>
+        <tr><td>Testlerde <code>skipped</code></td><td>SQL Server kapalı / sürücü yok</td><td>Bağlantıyı düzeltin; saf Python testleri yine çalışır.</td></tr>
+      </table>
+    </div>
+    <h3>14.1 Loglar nerede?</h3>
+    <div class="cmdgrid">
+      <div class="cmdcard"><div class="t">Senkronizasyon</div><code>logs\sync.log</code></div>
+      <div class="cmdcard"><div class="t">Hedef API</div><code>logs\api.log</code></div>
+      <div class="cmdcard"><div class="t">Veritabanı kurulumu</div><code>logs\init_db.log</code></div>
+      <div class="cmdcard"><div class="t">MSSQL geçmişi</div><code>dbo.SyncLog</code></div>
+    </div>
+    <p>Loglar 2 MB'ta döner, 5 yedek tutar. Hata özetlerinde parola maskelenir.</p>
+  </section>
+
+  <!-- 15 -->
+  <section id="ozet-komut">
+    <h2><span class="num">15</span> Komut kartı (kopyala-yapıştır)</h2>
+    <p>Aşağıdaki blokların her biri ayrı çalıştırılır. <code class="inl">&lt;kullanici&gt;</code> yerine kendi
+      Windows kullanıcı adınızı yazın.</p>
+    <div class="term"><div class="term-head"><span>1 · Kurulum (tek sefer)</span><span>proje kökü</span></div><pre>python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+<span class="c"># .env dosyasını düzenleyin (4. adım)</span>
+.\.venv\Scripts\python.exe scripts\init_db.py
+.\.venv\Scripts\python.exe scripts\generate_synthetic_data.py</pre></div>
+    <div class="term"><div class="term-head"><span>2 · Pencere 1 · kaynak API</span><span>sürekli açık</span></div><pre>.\scripts\run_source_api.ps1</pre></div>
+    <div class="term"><div class="term-head"><span>3 · Pencere 2 · hedef API + panel</span><span>sürekli açık</span></div><pre>.\scripts\run_target_api.ps1</pre></div>
+    <div class="term"><div class="term-head"><span>4 · Pencere 3 · senkronizasyon</span><span>tek sefer</span></div><pre>.\.venv\Scripts\python.exe scripts\sync_api_to_mssql.py</pre></div>
+    <div class="term"><div class="term-head"><span>5 · Otomasyon</span><span>isteğe bağlı</span></div><pre>.\scripts\register_sync_task.ps1 -IntervalMinutes 5 -RunNow</pre></div>
+    <div class="term"><div class="term-head"><span>6 · Test</span><span>isteğe bağlı</span></div><pre>.\.venv\Scripts\python.exe -m pytest tests -q</pre></div>
+
+    <div class="tipbox" style="margin-top:18px">
+      <b>Kurulum tamamlandı sayılır, eğer:</b> <code class="inl">/health</code> iki API'de de 200 dönüyorsa,
+      MSSQL'de 3/500/2000 satır varsa, ikinci senkronizasyon 0 ekliyorsa, panel gerçek sayıları gösteriyorsa
+      ve <code class="inl">pytest</code> yeşilse. Bunlardan biri eksikse kurulum tamamlanmamıştır — 14. bölüme bakın.
+    </div>
+  </section>
+
+  <p style="text-align:right"><a class="toplink" href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">↑ Başa dön</a></p>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>DentSync Demo · Sıfırdan Çalıştırma Kılavuzu</span>
+    <span>Mimari ve canlı veri akışı: <a href="/mimari">/mimari</a></span>
+  </div>
+</footer>
+</body>
+</html>

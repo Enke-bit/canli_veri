@@ -1,0 +1,28 @@
+# Ortam ve sirlar
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Loglar ve calisma dosyalari
+logs/*.log
+logs/*.lock
+logs/*.log.*
+data/backups/
+# Uretilen sentetik dosya her makinede yeniden uretilebilir (bkz. README).
+data/synthetic_source.json
+# Test/arac ciktilari
+.openchamber/
+*.tmp
+
+# IDE
+.vscode/
+.idea/

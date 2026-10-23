@@ -1,0 +1,1 @@
+"""Mock kaynak API paketi."""

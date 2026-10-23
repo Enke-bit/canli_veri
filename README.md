@@ -109,7 +109,7 @@ kalanıyla yönetici izni olmadan çalışır.
 ```
 MssqlPythonSync/
 ├── app/
-│   ├── main.py              # Hedef API (port 8000) + /dashboard
+│   ├── main.py              # Hedef API (port 8000) + /dashboard, /kilavuz, /mimari
 │   ├── config.py            # .env okuma, bağlantı dizesi, CORS
 │   ├── db.py                # SQLAlchemy motoru / oturum
 │   ├── models.py            # Tablo karşılıkları (ORM)
@@ -118,7 +118,9 @@ MssqlPythonSync/
 │   ├── sync_engine.py       # Senkronizasyon motoru (retry + upsert)
 │   ├── logging_setup.py     # Konsol + dosya log
 │   ├── static/
-│   │   └── dashboard.html   # Canlı analitik paneli (CDN'siz)
+│   │   ├── dashboard.html   # Canlı analitik paneli (CDN'siz)
+│   │   ├── kilavuz.html     # Sıfırdan çalıştırma kılavuzu
+│   │   └── mimari.html      # Mimari + SVG şemalar
 │   └── routers/             # clinics, patients, appointments, sync, analytics
 ├── mock_source/
 │   ├── main.py              # Kaynak API (port 8001)
@@ -477,6 +479,8 @@ Açılacak adresler:
 | POST | `/api/v1/sync/run` | Senkronizasyonu çalıştır (dashboard) |
 | GET | `/api/v1/analytics/summary` | Dashboard özeti (MSSQL agregasyonu) |
 | GET | `/dashboard` | Canlı analitik paneli |
+| GET | `/kilavuz` | Sıfırdan çalıştırma kılavuzu |
+| GET | `/mimari` | Mimari ve canlı veri akışı |
 
 Liste parametreleri: `limit` (1–200), `offset`, `include_deleted`;
 randevularda ek olarak `status`, `date_from`, `date_to`, `clinic_id`,
@@ -540,6 +544,14 @@ bağlantısı gerekmez (CDN yok, tüm stil ve grafikler yerel).
 ```
 http://127.0.0.1:8000/dashboard
 ```
+
+Aynı sunucuda iki dokümantasyon sayfası daha vardır (harici CDN yok, çevrimdışı
+çalışır):
+
+| Adres | İçerik |
+|---|---|
+| `/kilavuz` | **Sıfırdan çalıştırma kılavuzu.** 15 bölüm; her komutun beklenen çıktısı, `.env` tablosu, SQL Server Express/LocalDB karşılaştırması, hata çözümleri, kopyala-yapıştır komut kartı. |
+| `/mimari` | **Mimari ve canlı veri akışı.** 6 SVG şema: uçtan uca akış, ER modeli, senkronizasyon sırası, checkpoint/örtüşme zaman çizelgesi, hata-retry kararı, aktarım/okuma ritmi. Tasarım kararlarının gerekçeleri ve ölçekleme yol haritası. |
 
 Hedef API çalışmıyorsa tarayıcıda `http://127.0.0.1:8000/dashboard` açılmaz.
 Bu durumda önce:

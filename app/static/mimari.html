@@ -655,69 +655,71 @@
       <b>120 saniyelik örtüşme</b> uygular.</p>
 
     <div class="diagram">
-      <svg viewBox="0 0 1040 300" role="img" aria-label="Checkpoint ve örtüşme zaman çizelgesi">
+      <svg viewBox="0 0 1040 400" role="img" aria-label="Checkpoint ve örtüşme zaman çizelgesi">
         <defs>
           <marker id="tl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
           </marker>
         </defs>
         <g font-family="system-ui, Segoe UI, sans-serif">
-          <!-- axis -->
-          <line x1="60" y1="150" x2="980" y2="150" stroke="#475569" stroke-width="1.6" marker-end="url(#tl)"/>
-          <text x="986" y="154" font-size="9" fill="#64748b">zaman</text>
+          <!-- üst bilgi kutuları -->
+          <rect x="40" y="16" width="430" height="52" rx="8" fill="#151d2e" stroke="#2a3850"/>
+          <text x="56" y="37" font-size="11.5" font-weight="600" fill="#cbd5e1">Neden geriye bakıyoruz?</text>
+          <text x="56" y="55" font-size="10.5" fill="#94a3b8">Saat farkı veya geç commit edilen kayıt tam sınırda kaçabilir.</text>
 
-          <!-- ticks -->
-          <g font-size="9" fill="#64748b">
-            <line x1="180" y1="144" x2="180" y2="156" stroke="#64748b"/>
-            <text x="180" y="172" text-anchor="middle">09:55</text>
-            <line x1="360" y1="144" x2="360" y2="156" stroke="#64748b"/>
-            <text x="360" y="172" text-anchor="middle">09:58</text>
-            <line x1="540" y1="144" x2="540" y2="156" stroke="#64748b"/>
-            <text x="540" y="172" text-anchor="middle">10:00</text>
-            <line x1="720" y1="144" x2="720" y2="156" stroke="#64748b"/>
-            <text x="720" y="172" text-anchor="middle">10:02</text>
-            <line x1="900" y1="144" x2="900" y2="156" stroke="#64748b"/>
-            <text x="900" y="172" text-anchor="middle">10:05</text>
+          <rect x="500" y="16" width="300" height="52" rx="8" fill="#0e2f27" stroke="#10b981"/>
+          <text x="516" y="37" font-size="11.5" font-weight="600" fill="#6ee7b7">Sonuç: kayıt kaybı yok</text>
+          <text x="516" y="55" font-size="10.5" fill="#94a3b8">Aynı kayıt tekrar gelir → upsert zararsız.</text>
+
+          <rect x="824" y="16" width="176" height="52" rx="8" fill="#241f3d" stroke="#818cf8"/>
+          <text x="840" y="37" font-size="11.5" font-weight="600" fill="#c7d2fe">Maliyet</text>
+          <text x="840" y="55" font-size="10.5" fill="#94a3b8">Az sayıda fazla kayıt</text>
+
+          <!-- zaman ekseni -->
+          <line x1="60" y1="250" x2="980" y2="250" stroke="#475569" stroke-width="1.8" marker-end="url(#tl)"/>
+          <text x="986" y="254" font-size="10" fill="#64748b">zaman</text>
+
+          <g font-size="10.5" fill="#64748b">
+            <line x1="180" y1="243" x2="180" y2="257" stroke="#64748b"/>
+            <text x="180" y="275" text-anchor="middle">09:55</text>
+            <line x1="360" y1="243" x2="360" y2="257" stroke="#64748b"/>
+            <text x="360" y="275" text-anchor="middle">09:58</text>
+            <line x1="540" y1="243" x2="540" y2="257" stroke="#64748b"/>
+            <text x="540" y="275" text-anchor="middle">10:00</text>
+            <line x1="720" y1="243" x2="720" y2="257" stroke="#64748b"/>
+            <text x="720" y="275" text-anchor="middle">10:02</text>
+            <line x1="900" y1="243" x2="900" y2="257" stroke="#64748b"/>
+            <text x="900" y="275" text-anchor="middle">10:05</text>
           </g>
 
-          <!-- checkpoint marker -->
-          <line x1="540" y1="96" x2="540" y2="206" stroke="#f59e0b" stroke-width="1.4" stroke-dasharray="4 3"/>
-          <circle cx="540" cy="150" r="4" fill="#f59e0b"/>
-          <text x="540" y="88" text-anchor="middle" font-size="9.5" fill="#fbbf24">son checkpoint (10:00)</text>
+          <!-- checkpoint -->
+          <line x1="540" y1="140" x2="540" y2="300" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <circle cx="540" cy="250" r="5" fill="#f59e0b"/>
+          <text x="540" y="132" text-anchor="middle" font-size="10.5" fill="#fbbf24">son checkpoint (10:00)</text>
 
-          <!-- overlap window -->
-          <rect x="360" y="118" width="180" height="18" rx="4" fill="#f59e0b" opacity=".18" stroke="#f59e0b" stroke-dasharray="3 2"/>
-          <text x="450" y="131" text-anchor="middle" font-size="9" fill="#fbbf24">örtüşme: −120 sn</text>
+          <!-- örtüşme -->
+          <rect x="360" y="196" width="180" height="20" rx="4" fill="#f59e0b" opacity=".18" stroke="#f59e0b" stroke-dasharray="3 2"/>
+          <text x="450" y="211" text-anchor="middle" font-size="10" fill="#fbbf24">örtüşme: −120 sn</text>
 
-          <!-- query window -->
-          <rect x="360" y="196" width="440" height="20" rx="5" fill="#0ea5e9" opacity=".16" stroke="#0ea5e9"/>
-          <text x="580" y="210" text-anchor="middle" font-size="9.5" fill="#7dd3fc">sorgu aralığı: updated_since = 09:58 → şimdi</text>
+          <!-- sorgu aralığı -->
+          <rect x="360" y="304" width="600" height="24" rx="6" fill="#0ea5e9" opacity=".16" stroke="#0ea5e9"/>
+          <text x="660" y="321" text-anchor="middle" font-size="11" fill="#7dd3fc">sorgu aralığı: updated_since = 09:58 → şimdi</text>
 
-          <!-- records -->
-          <g font-size="9">
-            <circle cx="470" cy="150" r="5" fill="#10b981"/>
-            <text x="470" y="236" text-anchor="middle" fill="#6ee7b7">kayıt A 09:59</text>
-            <line x1="470" y1="156" x2="470" y2="228" stroke="#1d6b56" stroke-dasharray="2 3"/>
+          <!-- kayıtlar -->
+          <g font-size="10.5">
+            <circle cx="470" cy="250" r="6" fill="#10b981"/>
+            <text x="470" y="350" text-anchor="middle" fill="#6ee7b7">kayıt A · 09:59</text>
+            <line x1="470" y1="258" x2="470" y2="340" stroke="#1d6b56" stroke-dasharray="2 3"/>
 
-            <circle cx="540" cy="150" r="5" fill="#10b981"/>
-            <text x="540" y="252" text-anchor="middle" fill="#6ee7b7">kayıt B 10:00:00</text>
-            <line x1="540" y1="156" x2="540" y2="244" stroke="#1d6b56" stroke-dasharray="2 3"/>
-            <text x="540" y="266" text-anchor="middle" font-size="8" fill="#64748b">tam sınırda güncellendi</text>
+            <circle cx="540" cy="250" r="6" fill="#10b981"/>
+            <text x="540" y="374" text-anchor="middle" fill="#6ee7b7">kayıt B · 10:00:00</text>
+            <line x1="540" y1="258" x2="540" y2="364" stroke="#1d6b56" stroke-dasharray="2 3"/>
+            <text x="620" y="374" text-anchor="middle" font-size="9.5" fill="#64748b">← tam sınırda güncellendi</text>
 
-            <circle cx="700" cy="150" r="5" fill="#10b981"/>
-            <text x="700" y="236" text-anchor="middle" fill="#6ee7b7">kayıt C 10:02</text>
-            <line x1="700" y1="156" x2="700" y2="228" stroke="#1d6b56" stroke-dasharray="2 3"/>
+            <circle cx="700" cy="250" r="6" fill="#10b981"/>
+            <text x="700" y="350" text-anchor="middle" fill="#6ee7b7">kayıt C · 10:02</text>
+            <line x1="700" y1="258" x2="700" y2="340" stroke="#1d6b56" stroke-dasharray="2 3"/>
           </g>
-
-          <!-- why -->
-          <rect x="60" y="20" width="360" height="46" rx="8" fill="#151d2e" stroke="#2a3850"/>
-          <text x="74" y="38" font-size="9.5" fill="#cbd5e1">Neden geriye bakıyoruz?</text>
-          <text x="74" y="54" font-size="9" fill="#94a3b8">Saat farkı / geç commit edilen kayıt sınırda kaçabilir.</text>
-
-          <!-- result -->
-          <rect x="760" y="20" width="220" height="46" rx="8" fill="#0e2f27" stroke="#10b981"/>
-          <text x="774" y="38" font-size="9.5" fill="#6ee7b7">Sonuç: kayıt kaybı yok</text>
-          <text x="774" y="54" font-size="9" fill="#94a3b8">Aynı kayıt tekrar gelir → upsert zararsız.</text>
         </g>
       </svg>
       <div class="cap"><b>Şema 4.</b> Sorgu penceresi checkpoint'ten 120 sn geriden başlar; sınır kayıtları kaçmaz.</div>
@@ -745,7 +747,7 @@
     <p>Bu bölüm, "başarısız iş asla başarılı görünmez" kuralının nasıl uygulandığını gösterir.</p>
 
     <div class="diagram">
-      <svg viewBox="0 0 1040 380" role="img" aria-label="Hata ve retry akış şeması">
+      <svg viewBox="0 0 1040 570" role="img" aria-label="Hata ve retry akış şeması">
         <defs>
           <marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
@@ -756,82 +758,101 @@
           <marker id="flg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
           </marker>
+          <marker id="flo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b"/>
+          </marker>
+          <marker id="flb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
+          </marker>
         </defs>
-        <g font-family="system-ui, Segoe UI, sans-serif" font-size="9.5">
-          <!-- row 1 -->
-          <rect x="30" y="40" width="140" height="46" rx="8" fill="#172033" stroke="#3b4a63"/>
-          <text x="100" y="60" text-anchor="middle" font-size="10.5" fill="#f1f5f9" font-weight="600">Tur başlat</text>
-          <text x="100" y="76" text-anchor="middle" fill="#94a3b8">SyncLog = Running</text>
+        <g font-family="system-ui, Segoe UI, sans-serif">
 
-          <rect x="210" y="40" width="150" height="46" rx="8" fill="#0e2a3d" stroke="#0ea5e9"/>
-          <text x="285" y="60" text-anchor="middle" font-size="10.5" fill="#7dd3fc" font-weight="600">Sayfa çek</text>
-          <text x="285" y="76" text-anchor="middle" fill="#94a3b8">GET + timeout 15 sn</text>
+          <!-- ============ ana akış (x 250..470) ============ -->
+          <text x="250" y="26" font-size="11" font-weight="700" fill="#6ee7b7">BAŞARI YOLU</text>
+          <text x="600" y="26" font-size="11" font-weight="700" fill="#fcd34d">HATA YOLU</text>
 
-          <polygon points="440,34 545,63 440,92 335,63" fill="#241f3d" stroke="#818cf8"/>
-          <text x="440" y="60" text-anchor="middle" font-size="10" fill="#c7d2fe" font-weight="600">HTTP 200</text>
-          <text x="440" y="74" text-anchor="middle" font-size="8.5" fill="#94a3b8">ve şema geçerli?</text>
+          <rect x="250" y="40" width="220" height="52" rx="9" fill="#172033" stroke="#3b4a63"/>
+          <text x="360" y="62" text-anchor="middle" font-size="12.5" font-weight="600" fill="#f1f5f9">Tur başlat</text>
+          <text x="360" y="79" text-anchor="middle" font-size="10.5" fill="#94a3b8">SyncLog = Running</text>
 
-          <rect x="590" y="40" width="160" height="46" rx="8" fill="#0e2f27" stroke="#10b981"/>
-          <text x="670" y="60" text-anchor="middle" font-size="10.5" fill="#6ee7b7" font-weight="600">Upsert + COMMIT</text>
-          <text x="670" y="76" text-anchor="middle" fill="#94a3b8">tek sayfa, tek transaction</text>
+          <rect x="250" y="116" width="220" height="52" rx="9" fill="#0e2a3d" stroke="#0ea5e9"/>
+          <text x="360" y="138" text-anchor="middle" font-size="12.5" font-weight="600" fill="#7dd3fc">Sayfa çek</text>
+          <text x="360" y="155" text-anchor="middle" font-size="10.5" fill="#94a3b8">GET · timeout 15 sn</text>
 
-          <polygon points="830,34 935,63 830,92 725,63" fill="#241f3d" stroke="#818cf8"/>
-          <text x="830" y="60" text-anchor="middle" font-size="10" fill="#c7d2fe" font-weight="600">has_more?</text>
-          <text x="830" y="74" text-anchor="middle" font-size="8.5" fill="#94a3b8">next_offset var mı</text>
+          <polygon points="360,180 422,222 360,264 298,222" fill="#241f3d" stroke="#818cf8"/>
+          <text x="360" y="218" text-anchor="middle" font-size="11.5" font-weight="600" fill="#c7d2fe">HTTP 200</text>
+          <text x="360" y="233" text-anchor="middle" font-size="10" fill="#94a3b8">+ şema geçerli?</text>
 
-          <line x1="170" y1="63" x2="206" y2="63" stroke="#64748b" stroke-width="1.4" marker-end="url(#fl)"/>
-          <line x1="360" y1="63" x2="398" y2="63" stroke="#64748b" stroke-width="1.4" marker-end="url(#fl)"/>
-          <line x1="482" y1="63" x2="586" y2="63" stroke="#34d399" stroke-width="1.4" marker-end="url(#flg)"/>
-          <text x="534" y="56" text-anchor="middle" font-size="8.5" fill="#6ee7b7">evet</text>
-          <line x1="750" y1="63" x2="806" y2="63" stroke="#64748b" stroke-width="1.4" marker-end="url(#fl)"/>
+          <rect x="250" y="288" width="220" height="52" rx="9" fill="#0e2f27" stroke="#10b981"/>
+          <text x="360" y="310" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6ee7b7">Upsert + COMMIT</text>
+          <text x="360" y="327" text-anchor="middle" font-size="10.5" fill="#94a3b8">sayfa başına transaction</text>
 
-          <!-- loop back -->
-          <path d="M 830 92 L 830 116 L 285 116 L 285 90" fill="none" stroke="#38bdf8" stroke-width="1.3"
-                stroke-dasharray="4 3" marker-end="url(#fl)"/>
-          <text x="560" y="110" text-anchor="middle" font-size="8.5" fill="#7dd3fc">evet → offset = next_offset (sayfa döngüsü)</text>
+          <polygon points="360,352 422,394 360,436 298,394" fill="#241f3d" stroke="#818cf8"/>
+          <text x="360" y="390" text-anchor="middle" font-size="11.5" font-weight="600" fill="#c7d2fe">has_more?</text>
+          <text x="360" y="405" text-anchor="middle" font-size="10" fill="#94a3b8">next_offset var mı</text>
 
-          <!-- success final -->
-          <rect x="770" y="150" width="230" height="50" rx="8" fill="#0e2f27" stroke="#10b981"/>
-          <text x="885" y="170" text-anchor="middle" font-size="10.5" fill="#6ee7b7" font-weight="600">Checkpoint ilerlet + Success</text>
-          <text x="885" y="187" text-anchor="middle" font-size="8.5" fill="#94a3b8">SyncState + SyncLog = Success</text>
-          <path d="M 830 92 L 830 132 L 885 132 L 885 148" fill="none" stroke="#34d399" stroke-width="1.4" marker-end="url(#flg)"/>
-          <text x="856" y="128" font-size="8.5" fill="#6ee7b7">hayır</text>
+          <rect x="250" y="460" width="220" height="62" rx="9" fill="#0e2f27" stroke="#10b981"/>
+          <text x="360" y="482" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6ee7b7">Checkpoint + Success</text>
+          <text x="360" y="499" text-anchor="middle" font-size="10.5" fill="#94a3b8">SyncState + SyncLog</text>
+          <text x="360" y="513" text-anchor="middle" font-size="10" fill="#64748b">tüm sayfalar bitince</text>
 
-          <!-- retry branch -->
-          <polygon points="440,160 560,196 440,232 320,196" fill="#3a2a1a" stroke="#f59e0b"/>
-          <text x="440" y="192" text-anchor="middle" font-size="9.5" fill="#fcd34d" font-weight="600">429 / 5xx / timeout</text>
-          <text x="440" y="207" text-anchor="middle" font-size="8.5" fill="#fbbf24">veya geçersiz JSON</text>
-          <path d="M 440 92 L 440 158" fill="none" stroke="#f59e0b" stroke-width="1.4" marker-end="url(#fl)"/>
-          <text x="452" y="126" font-size="8.5" fill="#fbbf24">hayır</text>
+          <!-- dikey oklar -->
+          <line x1="360" y1="92" x2="360" y2="112" stroke="#64748b" stroke-width="1.5" marker-end="url(#fl)"/>
+          <line x1="360" y1="168" x2="360" y2="176" stroke="#64748b" stroke-width="1.5" marker-end="url(#fl)"/>
+          <line x1="360" y1="264" x2="360" y2="284" stroke="#34d399" stroke-width="1.6" marker-end="url(#flg)"/>
+          <text x="372" y="278" font-size="10" fill="#6ee7b7">evet</text>
+          <line x1="360" y1="340" x2="360" y2="348" stroke="#64748b" stroke-width="1.5" marker-end="url(#fl)"/>
+          <line x1="360" y1="436" x2="360" y2="456" stroke="#34d399" stroke-width="1.6" marker-end="url(#flg)"/>
+          <text x="372" y="450" font-size="10" fill="#6ee7b7">hayır</text>
 
-          <rect x="610" y="168" width="150" height="56" rx="8" fill="#1d2433" stroke="#475569"/>
-          <text x="685" y="188" text-anchor="middle" font-size="9.5" fill="#cbd5e1" font-weight="600">Bekle &amp; tekrar dene</text>
-          <text x="685" y="202" text-anchor="middle" font-size="8.5" fill="#94a3b8">üstel geri çekilme</text>
-          <text x="685" y="216" text-anchor="middle" font-size="8.5" fill="#94a3b8">1s · 2s · 4s (max 4)</text>
-          <line x1="560" y1="196" x2="606" y2="196" stroke="#f59e0b" stroke-width="1.4" marker-end="url(#fl)"/>
+          <!-- sayfa döngüsü: has_more evet → Sayfa çek -->
+          <path d="M 298 394 L 214 394 L 214 142 L 246 142" fill="none" stroke="#38bdf8" stroke-width="1.5"
+                stroke-dasharray="4 3" marker-end="url(#flb)"/>
+          <text x="200" y="268" font-size="10" fill="#7dd3fc" text-anchor="middle"
+                transform="rotate(-90 200 268)">evet · sonraki sayfa</text>
 
-          <path d="M 685 168 L 685 140 L 300 140 L 300 92" fill="none" stroke="#f59e0b" stroke-width="1.3"
-                stroke-dasharray="4 3" marker-end="url(#fl)"/>
-          <text x="500" y="136" font-size="8.5" fill="#fbbf24">deneme hakkı varsa</text>
+          <!-- ============ hata dalı ============ -->
+          <rect x="560" y="196" width="220" height="62" rx="9" fill="#1d2433" stroke="#475569"/>
+          <text x="670" y="218" text-anchor="middle" font-size="12" font-weight="600" fill="#cbd5e1">Bekle &amp; tekrar dene</text>
+          <text x="670" y="235" text-anchor="middle" font-size="10.5" fill="#94a3b8">üstel geri çekilme</text>
+          <text x="670" y="250" text-anchor="middle" font-size="10" fill="#64748b">1s · 2s · 4s (max 4 deneme)</text>
 
-          <!-- failed -->
-          <rect x="790" y="252" width="210" height="58" rx="8" fill="#3a1a24" stroke="#f43f5e"/>
-          <text x="895" y="272" text-anchor="middle" font-size="10.5" fill="#fda4af" font-weight="600">SyncLog = Failed</text>
-          <text x="895" y="288" text-anchor="middle" font-size="8.5" fill="#fecdd3">checkpoint DEĞİŞMEZ</text>
-          <text x="895" y="302" text-anchor="middle" font-size="8.5" fill="#fecdd3">sonraki tur aynı veriyi alır</text>
-          <path d="M 685 224 L 685 244 L 856 244 L 856 250" fill="none" stroke="#f43f5e" stroke-width="1.4" marker-end="url(#flr)"/>
-          <text x="720" y="240" font-size="8.5" fill="#fda4af">hak bitti / kalıcı hata</text>
+          <text x="500" y="212" text-anchor="middle" font-size="10" fill="#fbbf24">hayır</text>
+          <line x1="422" y1="222" x2="556" y2="222" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#flo)"/>
 
-          <!-- bad request retryless -->
-          <path d="M 440 232 L 440 262 L 786 262" fill="none" stroke="#f43f5e" stroke-width="1.3"
+          <!-- retry geri dönüşü -->
+          <path d="M 670 196 L 670 168" fill="none" stroke="#f59e0b" stroke-width="1.4"
+                stroke-dasharray="4 3" marker-end="url(#flo)"/>
+          <text x="680" y="188" font-size="9.5" fill="#fbbf24">tekrar</text>
+
+          <rect x="560" y="320" width="220" height="70" rx="9" fill="#3a1a24" stroke="#f43f5e"/>
+          <text x="670" y="344" text-anchor="middle" font-size="12.5" font-weight="600" fill="#fda4af">SyncLog = Failed</text>
+          <text x="670" y="362" text-anchor="middle" font-size="10.5" fill="#fecdd3">checkpoint DEĞİŞMEZ</text>
+          <text x="670" y="378" text-anchor="middle" font-size="10" fill="#fecdd3">sonraki tur aynı veriyi alır</text>
+
+          <line x1="670" y1="258" x2="670" y2="316" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#flr)"/>
+          <text x="682" y="292" font-size="10" fill="#fda4af">deneme bitti / kalıcı hata</text>
+
+          <!-- kalıcı hata: şema / offset (diyamantın sağından, retry kutusunun solundan geçer) -->
+          <path d="M 422 240 L 520 240 L 520 355 L 556 355" fill="none" stroke="#f43f5e" stroke-width="1.4"
                 stroke-dasharray="4 3" marker-end="url(#flr)"/>
-          <text x="560" y="256" font-size="8.5" fill="#fda4af">şema/offset hatası: retry yok</text>
+          <text x="528" y="300" font-size="10" fill="#fda4af">retry</text>
+          <text x="528" y="314" font-size="10" fill="#fda4af">yok</text>
+          <text x="528" y="330" font-size="9" fill="#94a3b8">(şema hatası)</text>
 
-          <!-- note -->
-          <rect x="30" y="300" width="720" height="56" rx="8" fill="#151d2e" stroke="#2a3850"/>
-          <text x="46" y="320" font-size="9.5" fill="#cbd5e1">Kalıcı veri hatası (FK ihlali, geçersiz durum) tekrar denenmez — aynı veri aynı hatayı verir.</text>
-          <text x="46" y="336" font-size="9.5" fill="#cbd5e1">Bu durumda hata özeti SyncLog.ErrorSummary alanına yazılır ve panelde görünür.</text>
-          <text x="46" y="350" font-size="9" fill="#64748b">Geçici hatalar (ağ, 429, 5xx) için retry; veri hataları için düzeltme gerekir.</text>
+          <!-- notlar -->
+          <rect x="250" y="536" width="530" height="30" rx="7" fill="#151d2e" stroke="#2a3850"/>
+          <text x="264" y="556" font-size="10" fill="#94a3b8">Geçici hata (ağ, 429, 5xx) → retry · Kalıcı veri hatası → düzeltme gerekir, aynı istek tekrar denenmez.</text>
+
+          <rect x="800" y="196" width="210" height="194" rx="9" fill="#151d2e" stroke="#2a3850"/>
+          <text x="816" y="218" font-size="10.5" font-weight="600" fill="#cbd5e1">Kanıt (pytest)</text>
+          <text x="816" y="240" font-size="9.5" fill="#6ee7b7">503→503→200: 3. istekte başarı</text>
+          <text x="816" y="258" font-size="9.5" fill="#6ee7b7">sürekli 500: 4. denemede durur</text>
+          <text x="816" y="276" font-size="9.5" fill="#7dd3fc">bozuk JSON: yazma yok</text>
+          <text x="816" y="294" font-size="9.5" fill="#fda4af">kaynak kapalı: Failed</text>
+          <text x="816" y="312" font-size="9.5" fill="#fda4af">checkpoint ilerlemez</text>
+          <text x="816" y="338" font-size="9.5" fill="#6ee7b7">yeniden çalışma toparlar</text>
+          <text x="816" y="364" font-size="9" fill="#64748b">logs/sync.log · dbo.SyncLog</text>
         </g>
       </svg>
       <div class="cap"><b>Şema 5.</b> Başarı yolu yeşil, geçici hata turuncu, kalıcı hata kırmızı.</div>
@@ -863,22 +884,22 @@
     <div class="diagram">
       <svg viewBox="0 0 1040 240" role="img" aria-label="Senkronizasyon ve panel okuma sıklığı">
         <g font-family="system-ui, Segoe UI, sans-serif">
-          <text x="30" y="34" font-size="10" fill="#94a3b8">Senkronizasyon turları (5 dk)</text>
+          <text x="30" y="34" font-size="11" fill="#94a3b8">Senkronizasyon turları (5 dk)</text>
           <line x1="30" y1="70" x2="1000" y2="70" stroke="#334155" stroke-width="1.4"/>
           <g fill="#10b981">
             <circle cx="60" cy="70" r="5"/><circle cx="290" cy="70" r="5"/><circle cx="520" cy="70" r="5"/>
             <circle cx="750" cy="70" r="5"/><circle cx="980" cy="70" r="5"/>
           </g>
-          <g font-size="9" fill="#6ee7b7" text-anchor="middle">
-            <text x="60" y="52">00:00</text><text x="290" y="52">05:00</text><text x="520" y="52">10:00</text>
-            <text x="750" y="52">15:00</text><text x="980" y="52">20:00</text>
+          <g font-size="10" fill="#6ee7b7" text-anchor="middle">
+            <text x="60" y="54">00:00</text><text x="290" y="54">05:00</text><text x="520" y="54">10:00</text>
+            <text x="750" y="54">15:00</text><text x="980" y="54">20:00</text>
           </g>
-          <g font-size="8.5" fill="#64748b" text-anchor="middle">
-            <text x="175" y="88">veri bekliyor</text><text x="405" y="88">veri bekliyor</text>
-            <text x="635" y="88">veri bekliyor</text><text x="865" y="88">veri bekliyor</text>
+          <g font-size="9.5" fill="#64748b" text-anchor="middle">
+            <text x="175" y="90">veri bekliyor</text><text x="405" y="90">veri bekliyor</text>
+            <text x="635" y="90">veri bekliyor</text><text x="865" y="90">veri bekliyor</text>
           </g>
 
-          <text x="30" y="132" font-size="10" fill="#94a3b8">Panel okumaları (10 sn) — yalnızca görüntüleme</text>
+          <text x="30" y="132" font-size="11" fill="#94a3b8">Panel okumaları (10 sn) — yalnızca görüntüleme</text>
           <line x1="30" y1="168" x2="1000" y2="168" stroke="#334155" stroke-width="1.4"/>
           <g stroke="#38bdf8" stroke-width="1.2">
             <!-- 20 ticks across 970px -->
@@ -893,8 +914,8 @@
             <line x1="828" y1="160" x2="828" y2="176"/><line x1="876" y1="160" x2="876" y2="176"/>
             <line x1="924" y1="160" x2="924" y2="176"/><line x1="972" y1="160" x2="972" y2="176"/>
           </g>
-          <text x="30" y="206" font-size="9" fill="#64748b">Panel bir tur arasında yeni veriyi ancak senkronizasyon bittikten sonra görür; bu yüzden “gerçek zamanlı” değil, “near-real-time” (5 dk) olarak adlandırılır.</text>
-          <text x="30" y="224" font-size="9" fill="#64748b">Daha sık veri için: -IntervalMinutes 1 veya POST /api/v1/sync/run (olay bazlı).</text>
+          <text x="30" y="206" font-size="10" fill="#64748b">Panel bir tur arasında yeni veriyi ancak senkronizasyon bittikten sonra görür; bu yüzden “gerçek zamanlı” değil, “near-real-time” (5 dk) olarak adlandırılır.</text>
+          <text x="30" y="224" font-size="10" fill="#64748b">Daha sık veri için: -IntervalMinutes 1 veya POST /api/v1/sync/run (olay bazlı).</text>
         </g>
       </svg>
       <div class="cap"><b>Şema 6.</b> Aktarım ve okuma farklı ritimlerde çalışır; ikisi de birbirini kilitlemez.</div>

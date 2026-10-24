@@ -1,6 +1,8 @@
-# DentSync Demo — MSSQL + Python API Otomatik Veri Senkronizasyonu
+# DentSync — MSSQL + Python API Otomatik Veri Senkronizasyonu
 
-Bu proje, **tamamen sentetik** klinik verilerini uçtan uca şu akışla taşır:
+Sentetik klinik verisini bir dış API'den çekip MSSQL'e aktaran, değişiklikleri
+artımlı olarak senkronize eden ve sonucu kendi REST API'si + canlı panel ile
+sunan uçtan uca bir demo.
 
 ```
 Sentetik veri üreticisi
@@ -18,53 +20,171 @@ MSSQL  (DentSyncDemo)
 Hedef API (kendi REST API'miz) ── port 8000
         │
         ▼
-API istemcisi (tarayıcı / curl / başka uygulama)
+Panel · istemci (tarayıcı / curl / başka uygulama)
 ```
 
 Projenin amacı öğrenmektir: Python, REST API, MSSQL, sentetik veri ve otomatik
-senkronizasyonun nasıl birlikte çalıştığını çalışan bir sistem üzerinde gösterir.
+senkronizasyonun nasıl birlikte çalıştığını **çalışan** bir sistem üzerinde gösterir.
 
 > **Önemli:** Bu sistemde gerçek hasta verisi yoktur ve olmamalıdır. E-postalar
 > `@example.test`, telefonlar `TEST_PHONE_000001` gibidir. API'lerde kimlik
 > doğrulama yoktur; yalnızca kendi bilgisayarınızda kullanın.
 
+**Durum:** 89 otomatik test geçiyor · 2 API · 5 tablo · 4 dokümantasyon sayfası · harici servis/CDN yok.
+
 ---
 
-## 0. Tek komutla başlatma (önerilen)
+## İçindekiler
 
-Kurulum bir kez yapıldıktan sonra projeyi çalıştırmak için tek komut yeterlidir:
+| Bölüm | Ne anlatır |
+|---|---|
+| [Özellikler](#özellikler) | Neler var, hangi yetenekler |
+| [Çalıştırma](#çalıştırma-önerilen-tek-komut) | 3 adımda ayağa kaldırma |
+| [1. Ortam tespiti](#1-bu-makinede-yapılan-ortam-tespiti) | Python, SQL Server, ODBC durumu |
+| [2. Her araç ne işe yarar](#2-her-araç-ne-işe-yarıyor) | Teknoloji seçimlerinin gerekçesi |
+| [3. Klasör yapısı](#3-klasör-yapısı) | Hangi dosya neyden sorumlu |
+| [4. Kurulum](#4-kurulum-sırayla) | venv, paketler, `.env` |
+| [5. Sentetik veri](#5-sentetik-veri) | Üretim, doğrulama, yeniden üretim |
+| [6. MSSQL](#6-mssql-veritabanı-ve-şema) | Şema, kısıtlar, SSMS kontrolü |
+| [7. Kaynak API](#7-kaynak-api-port-8001) | 10 uç nokta, sayfalama, soft delete |
+| [8. Senkronizasyon](#8-senkronizasyon) | Upsert, checkpoint, retry, kilit |
+| [9. Hedef API](#9-hedef-api-port-8000) | Filtreler, durum güncelleme, sync uçları |
+| [10. Testler](#10-testler) | 89 test, entegrasyon katmanı |
+| [11. Panel](#11-canlı-analitik-paneli-dashboard) | `/dashboard` ve dokümantasyon sayfaları |
+| [12. Otomasyon](#12-windows-task-scheduler-ile-otomasyon) | 5 dakikalık görev |
+| [13. Durdurma](#13-sistemi-durdurma) | Güvenli kapatma |
+| [14. Sorun giderme](#14-sık-karşılaşılan-hatalar) | Hata → çözüm tablosu |
+| [15. Güvenlik](#15-güvenlik-ve-üretime-geçiş) | Demo sınırı, üretim notları |
+| [16. Hızlı başlangıç](#16-uçtan-uca-hızlı-başlangıç-özet) | Üç pencere özeti |
+
+---
+
+## Özellikler
+
+| Alan | Ne var |
+|---|---|
+| **İki ayrı REST API** | Kaynak API `:8001` (10 uç nokta, sayfalama + `updated_since` + soft delete) · Hedef API `:8000` (10 uç nokta, filtre + durum güncelleme + analitik) |
+| **Senkronizasyon motoru** | Artımlı çekme · upsert (varsa güncelle, yoksa ekle) · checkpoint · 120 sn örtüşme penceresi · sayfa bazlı transaction · sınırlı retry (429/5xx/timeout) · iki katmanlı kilit |
+| **MSSQL şeması** | 5 tablo (`Clinics`, `Patients`, `Appointments`, `SyncState`, `SyncLog`) · PK + UNIQUE + FK + CHECK · `datetime2(3)` UTC · soft delete (`IsDeleted`) |
+| **Sentetik veri** | 3 klinik / 500 hasta / 2.000 randevu · `seed` ile tekrarlanabilir · üretimden önce bütünlük doğrulaması · `--force` ile yedekli yeniden üretim |
+| **Canlı panel** | `/dashboard` — tüm sayılar gerçek MSSQL agregasyonu · 10 sn yenileme · sağlık şeridi · durum/trend/klinik grafikleri · son `SyncLog` akışı · panelden uçtan uca deneme |
+| **Dokümantasyon sayfaları** | `/kilavuz` (15 bölüm, her komutun beklenen çıktısı) · `/mimari` (6 SVG şema) · `/slayt` (14 slayt, klavye ile sunum) |
+| **Otomasyon** | Windows Task Scheduler ile 5 dakikalık tur (`-IntervalMinutes` ile ayarlanır) · yönetici izni gerekmez · yalnızca kendi görevini oluşturur/siler |
+| **Test** | 89 pytest · MSSQL entegrasyonu ayrı `DentSyncTest` veritabanında · veri yoksa entegrasyon testleri otomatik `skip` |
+| **Güvenlik** | Sırlar `.env`'de ve git dışında · parametreli SQL / ORM · loglarda parola maskeli · CORS yalnızca loopback · tamamen sentetik veri |
+
+### Tek komutla çalıştırma
+
+Kurulumu bir kez yaptıktan sonra `python run.py`; sanal ortamı ve paketleri denetler,
+`.env` + sentetik veriyi kontrol eder, MSSQL bağlantısını ve 5 tabloyu doğrular,
+iki API'yi başlatır ve paneli açar. `Ctrl+C` ikisini de temiz kapatır.
+Alt süreçler Windows Job Object'e bağlıdır: betik kapansa bile arkada sunucu kalmaz.
+
+### Neyi çözüyor?
+
+| Klasik sorun | Bu projedeki çözüm |
+|---|---|
+| Aynı kayıt iki kez yazılır | Upsert + `UNIQUE` indeks (iki bağımsız güvence) |
+| Her turda tüm veri çekilir | `updated_since` + checkpoint ile artımlı çekme |
+| Zaman sınırındaki kayıt kaçar | Geriye 120 sn örtüşme + `>=` karşılaştırma |
+| Yarıda kalan aktarım veriyi bozar | Sayfa bazlı transaction; checkpoint en sonda ilerler |
+| Hata "başarılı" görünür | `SyncLog` durumu + checkpoint ilerlememesi + 89 test |
+| Aynı iş iki kez başlar | `logs/sync.lock` + süreç içi kilit (409) |
+
+### Ekran görüntüleri
+
+| Canlı panel (`/dashboard`) | Mimari (`/mimari`) |
+|---|---|
+| ![Canlı panel](docs/screenshots/dashboard.jpg) | ![Mimari](docs/screenshots/mimari.jpg) |
+| Tüm sayılar gerçek MSSQL agregasyonu; sahte veri yok | 6 SVG şema: akış, ER modeli, sıra, checkpoint, retry, ritim |
+
+| Sıfırdan kurulum (`/kilavuz`) | Sunum (`/slayt`) |
+|---|---|
+| ![Kılavuz](docs/screenshots/kilavuz.jpg) | ![Sunum](docs/screenshots/slayt.jpg) |
+| 15 bölüm, her komutun beklenen çıktısı | 14 slayt, klavye ile sunum |
+
+---
+
+## Çalıştırma (önerilen: tek komut)
+
+### Ön koşullar
+
+| Gereksinim | Not |
+|---|---|
+| Windows 10/11 + PowerShell | Geliştirilen ve test edilen ortam |
+| Python 3.10 – 3.13 | `python --version` ile kontrol edin |
+| SQL Server | **Express** (`.\SQLEXPRESS`) veya **LocalDB** (`(localdb)\MSSQLLocalDB`) |
+| ODBC Driver 17 veya 18 | `Get-OdbcDriver` ile kontrol edin |
+
+### Üç adım
 
 ```powershell
+git clone https://github.com/Enke-bit/canli_veri.git
+cd canli_veri
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env        # sonra .env'i düzenleyin
 python run.py
 ```
 
-Bu komut sırayla: sanal ortamı ve paketleri denetler → `.env` ve sentetik veriyi
-kontrol eder → MSSQL bağlantısını ve 5 tabloyu doğrular → Kaynak API'yi (8001)
-ve Hedef API'yi (8000) başlatır → paneli tarayıcıda açar. `Ctrl+C` ile ikisi de
-temiz kapatılır; veriler MSSQL'de korunur.
+`.env` içinde en az şu üç satırı kendi ortamınıza göre ayarlayın:
 
-**Tek sayfa açmak için kısa yollar** (her biri gerekirse hedef API'yi kendisi başlatır):
+```ini
+DB_SERVER=(localdb)\MSSQLLocalDB        # veya .\SQLEXPRESS
+DB_DRIVER=ODBC Driver 17 for SQL Server # veya 18
+DB_ENCRYPT=false                        # eski sürücü + LocalDB ise; üretimde true
+```
 
-| Komut | Açtığı sayfa |
+`run.py` sırayla şunları yapar ve her adımı `[OK]` / `[X]` ile bildirir:
+
+1. Sanal ortam + paketler (gerekirse kendini `.venv` ile yeniden başlatır)
+2. `.env` ve `data/synthetic_source.json` kontrolü
+3. MSSQL bağlantısı + 5 tablo doğrulaması
+4. Kaynak API (`:8001`) → Hedef API (`:8000`)
+5. Durum tablosu + tarayıcıda panel
+
+### Tek sayfa açmak (kısa yollar)
+
+Her biri hedef API'yi gerekiyorsa kendisi başlatır, sayfayı açar, `Ctrl+C` ile kapatır.
+
+| Komut | Sayfa |
 |---|---|
 | `python run_panel.py` | <http://127.0.0.1:8000/dashboard> — canlı panel |
 | `python run_sema.py` | <http://127.0.0.1:8000/mimari> — şemalı mimari |
 | `python run_sifir_kurulum.py` | <http://127.0.0.1:8000/kilavuz> — sıfırdan kurulum |
 | `python run_slayt.py` | <http://127.0.0.1:8000/slayt> — 14 slaytlık sunum |
 
-`run.py` seçenekleri:
+Ortak seçenekler: `--port 8010`, `--no-browser`, `--url-only` (yalnızca adresi yazar), `--help`.
 
-```powershell
-python run.py --sync            # açılışta bir senkronizasyon da çalıştır
-python run.py --sync --full     # checkpoint'i yok say, tam çekim yap
-python run.py --check           # sadece ortamı denetle, sunucu başlatma
-python run.py --no-browser      # tarayıcıyı açma
-python run.py --open sema       # panel yerine mimari sayfasını aç
-python run.py --target-port 8010 --source-port 8011   # farklı portlar
-```
+### `run.py` seçenekleri
 
-Betikler global `python` ile çalıştırılsa bile kendini otomatik olarak `.venv`
-içindeki Python ile yeniden başlatır; ayrıca `activate` adımı gerekmez.
+| Seçenek | Etkisi |
+|---|---|
+| `--sync` | Açılışta bir senkronizasyon çalıştırır |
+| `--sync --full` | Checkpoint'i yok sayar, tam çekim yapar |
+| `--check` | Yalnızca ortamı denetler, sunucu başlatmaz |
+| `--no-browser` | Tarayıcıyı açmaz |
+| `--open sema` | `panel` (varsayılan), `sema`, `kilavuz`, `slayt`, `docs`, `none` |
+| `--source-port` / `--target-port` | Port çakışmasında farklı port |
+
+### Hangi durumda hangi komut?
+
+| İhtiyaç | Komut |
+|---|---|
+| Sistemi ilk kez ayağa kaldırma | `python run.py` |
+| Sadece paneli göstermek | `python run_panel.py` |
+| Sunum yapmak | `python run_slayt.py` |
+| Kurulumu birine anlatmak | `python run_sifir_kurulum.py` |
+| Ortam bozuk mu diye bakmak | `python run.py --check` |
+| Tek seferlik aktarım | `python run.py --sync` veya `scripts\sync_api_to_mssql.py` |
+
+### Durdurma
+
+`Ctrl+C`. Veriler MSSQL'de korunur; hiçbir tablo silinmez. Zamanlanmış görev varsa
+`.\scripts\unregister_sync_task.ps1` ile kaldırın.
+
+> Betikler global `python` ile çalıştırılsa bile kendini otomatik olarak `.venv`
+> içindeki Python ile yeniden başlatır; `activate` adımı gerekmez.
 
 ---
 
@@ -554,7 +674,7 @@ Geçersiz durum → `422`; olmayan kayıt → `404`; silinmiş kayıt → `409`.
 .\.venv\Scripts\python.exe -m pytest tests -q
 ```
 
-Beklenen: `63 passed`.
+Beklenen: `89 passed`.
 
 - `test_synthetic_data.py` — üretim, tekrarlanabilirlik, referans bütünlüğü,
   sentetik iletişim verisi, üzerine yazma koruması.

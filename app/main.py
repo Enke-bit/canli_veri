@@ -24,6 +24,7 @@ logger = configure_logging("target_api", "api.log", settings.log_level)
 DASHBOARD_FILE = PROJECT_ROOT / "app" / "static" / "dashboard.html"
 GUIDE_FILE = PROJECT_ROOT / "app" / "static" / "kilavuz.html"
 ARCHITECTURE_FILE = PROJECT_ROOT / "app" / "static" / "mimari.html"
+SLIDES_FILE = PROJECT_ROOT / "app" / "static" / "slayt.html"
 
 app = FastAPI(
     title="DentSync Hedef API",
@@ -32,7 +33,7 @@ app = FastAPI(
         "Tarihler UTC ve ISO-8601 ('Z') formatindadir. "
         "Kimlik dogrulama yoktur; internete acik ortamda kullanmayin."
     ),
-    version="1.1.0",
+    version="1.3.0",
 )
 
 # Dashboard ayni makinedeki farkli portlardan (veya file:// ile) veri cekebilsin.
@@ -99,6 +100,12 @@ def architecture() -> FileResponse:
     return _static_page(ARCHITECTURE_FILE, "app/static/mimari.html")
 
 
+@app.get("/slayt", include_in_schema=False)
+def slides() -> FileResponse:
+    """Sunum: canli veri cekme mimarisi (klavye ile gezinilir)."""
+    return _static_page(SLIDES_FILE, "app/static/slayt.html")
+
+
 def _static_page(path: Path, relative_name: str) -> FileResponse:
     if not path.exists():
         return JSONResponse(
@@ -116,6 +123,7 @@ def root() -> dict[str, str]:
         "dashboard": "/dashboard",
         "guide": "/kilavuz",
         "architecture": "/mimari",
+        "slides": "/slayt",
         "health": "/health",
-        "version": "1.2.0",
+        "version": "1.3.0",
     }

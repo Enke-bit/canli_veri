@@ -30,6 +30,44 @@ senkronizasyonun nasıl birlikte çalıştığını çalışan bir sistem üzeri
 
 ---
 
+## 0. Tek komutla başlatma (önerilen)
+
+Kurulum bir kez yapıldıktan sonra projeyi çalıştırmak için tek komut yeterlidir:
+
+```powershell
+python run.py
+```
+
+Bu komut sırayla: sanal ortamı ve paketleri denetler → `.env` ve sentetik veriyi
+kontrol eder → MSSQL bağlantısını ve 5 tabloyu doğrular → Kaynak API'yi (8001)
+ve Hedef API'yi (8000) başlatır → paneli tarayıcıda açar. `Ctrl+C` ile ikisi de
+temiz kapatılır; veriler MSSQL'de korunur.
+
+**Tek sayfa açmak için kısa yollar** (her biri gerekirse hedef API'yi kendisi başlatır):
+
+| Komut | Açtığı sayfa |
+|---|---|
+| `python run_panel.py` | <http://127.0.0.1:8000/dashboard> — canlı panel |
+| `python run_sema.py` | <http://127.0.0.1:8000/mimari> — şemalı mimari |
+| `python run_sifir_kurulum.py` | <http://127.0.0.1:8000/kilavuz> — sıfırdan kurulum |
+| `python run_slayt.py` | <http://127.0.0.1:8000/slayt> — 14 slaytlık sunum |
+
+`run.py` seçenekleri:
+
+```powershell
+python run.py --sync            # açılışta bir senkronizasyon da çalıştır
+python run.py --sync --full     # checkpoint'i yok say, tam çekim yap
+python run.py --check           # sadece ortamı denetle, sunucu başlatma
+python run.py --no-browser      # tarayıcıyı açma
+python run.py --open sema       # panel yerine mimari sayfasını aç
+python run.py --target-port 8010 --source-port 8011   # farklı portlar
+```
+
+Betikler global `python` ile çalıştırılsa bile kendini otomatik olarak `.venv`
+içindeki Python ile yeniden başlatır; ayrıca `activate` adımı gerekmez.
+
+---
+
 ## 1. Bu makinede yapılan ortam tespiti
 
 Kurulum sırasında bulunanlar (sizin makinenizde de benzer olabilir):
@@ -481,6 +519,7 @@ Açılacak adresler:
 | GET | `/dashboard` | Canlı analitik paneli |
 | GET | `/kilavuz` | Sıfırdan çalıştırma kılavuzu |
 | GET | `/mimari` | Mimari ve canlı veri akışı |
+| GET | `/slayt` | Sunum: canlı veri çekme mimarisi (14 slayt) |
 
 Liste parametreleri: `limit` (1–200), `offset`, `include_deleted`;
 randevularda ek olarak `status`, `date_from`, `date_to`, `clinic_id`,
@@ -552,13 +591,39 @@ Aynı sunucuda iki dokümantasyon sayfası daha vardır (harici CDN yok, çevrim
 |---|---|
 | `/kilavuz` | **Sıfırdan çalıştırma kılavuzu.** 15 bölüm; her komutun beklenen çıktısı, `.env` tablosu, SQL Server Express/LocalDB karşılaştırması, hata çözümleri, kopyala-yapıştır komut kartı. |
 | `/mimari` | **Mimari ve canlı veri akışı.** 6 SVG şema: uçtan uca akış, ER modeli, senkronizasyon sırası, checkpoint/örtüşme zaman çizelgesi, hata-retry kararı, aktarım/okuma ritmi. Tasarım kararlarının gerekçeleri ve ölçekleme yol haritası. |
+| `/slayt` | **Sunum (14 slayt).** Canlı veri çekme mimarisi: problem, büyük resim, artımlı çekme, örtüşme, upsert, checkpoint disiplini, retry, eşzamanlılık, zamanlama, gözlemlenebilirlik, ölçekleme. Ok tuşlarıyla gezinilir, `F` tam ekran, `P` ile yazdırma/PDF. |
 
 Hedef API çalışmıyorsa tarayıcıda `http://127.0.0.1:8000/dashboard` açılmaz.
-Bu durumda önce:
+Bu durumda en kısa yol:
 
 ```powershell
-.\scripts\run_target_api.ps1
+python run_panel.py
 ```
+
+Bu betik hedef API'yi kendisi başlatır, sayfayı açar ve `Ctrl+C` ile ikisini de
+kapatır. `--port 8010`, `--no-browser`, `--url-only` seçenekleri desteklenir.
+
+### Sunum (14 slayt)
+
+`http://127.0.0.1:8000/slayt` adresi, "canlı veri çekme mimarisi" konulu bir
+slayt destesidir. Ayrı bir dosya açmaya gerek yoktur; API sunar.
+
+```powershell
+python run_slayt.py
+```
+
+| Slayt | Konu |
+|---|---|
+| 1–2 | Başlık · naif yaklaşımın 5 kırılma noktası |
+| 3–4 | Uçtan uca akış şeması · üç canlılık katmanı (aktarım/okuma/olay) |
+| 5–6 | Artımlı çekme · 120 sn örtüşme penceresi |
+| 7–8 | Upsert ve üç güvence · checkpoint disiplini ve işlem sırası |
+| 9–10 | Geçici/kalıcı hata ayrımı · eşzamanlılık kilitleri |
+| 11–12 | Zamanlama seçenekleri · gözlemlenebilirlik |
+| 13–14 | Ölçekleme sırası · tek cümlelik özet |
+
+Klavye: `→`/`←` gezinme, `F` tam ekran, `Home`/`End`, `P` yazdır/PDF.
+Slaytlar satır içi SVG kullanır; harici CDN yoktur, çevrimdışı çalışır.
 
 Panelin gösterdiği her sayı **MSSQL'den** gelir:
 

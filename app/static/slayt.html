@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canlı Veri Çekme Mimarisi · DentSync</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #131d30;
+    --panel2: #1a2740;
+    --border: #2a3a55;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --muted2: #64748b;
+    --brand: #38bdf8;
+    --indigo: #818cf8;
+    --ok: #34d399;
+    --warn: #fbbf24;
+    --bad: #fb7185;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------------- sahne ---------------- */
+  .stage { position: fixed; inset: 0; display: flex; }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    padding: 5.2vh 6vw 7vh;
+    overflow-y: auto;
+  }
+  .slide.active { display: flex; }
+  .slide.active > * { flex-shrink: 0; }
+
+  .kicker {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: .72rem; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
+    color: var(--brand); margin-bottom: 1.1rem;
+  }
+  .kicker::before { content: ""; width: 22px; height: 2px; background: var(--brand); border-radius: 2px; }
+  h1 { font-size: clamp(2rem, 4.4vw, 3.4rem); line-height: 1.08; margin: 0 0 1rem; letter-spacing: -.03em; }
+  h2 { font-size: clamp(1.5rem, 2.9vw, 2.3rem); line-height: 1.15; margin: 0 0 .8rem; letter-spacing: -.02em; }
+  h3 { font-size: 1rem; margin: 0 0 .45rem; letter-spacing: -.01em; }
+  p { font-size: clamp(.92rem, 1.25vw, 1.1rem); line-height: 1.6; color: #cbd5e1; margin: 0 0 .8rem; max-width: 62ch; }
+  .lead { font-size: clamp(1rem, 1.5vw, 1.25rem); color: #dbeafe; max-width: 60ch; }
+  .dim { color: var(--muted); }
+  b, strong { color: #fff; }
+  .hl { color: var(--brand); }
+  .hl-g { color: var(--ok); }
+  .hl-y { color: var(--warn); }
+  .hl-r { color: var(--bad); }
+  code {
+    font-family: ui-monospace, Consolas, monospace; font-size: .86em;
+    background: #0a1526; border: 1px solid #23334d; border-radius: 5px;
+    padding: .1em .42em; color: #a5f3fc;
+  }
+
+  .grid { display: grid; gap: 1rem; margin-top: .9rem; }
+  .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.1rem 1.25rem;
+  }
+  .card.tight { padding: .9rem 1rem; }
+  .card .num {
+    font-size: .7rem; font-weight: 700; color: var(--brand);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: .35rem;
+  }
+  .card p { font-size: .86rem; margin: .3rem 0 0; color: var(--muted); line-height: 1.5; }
+  .big { font-size: clamp(1.5rem, 2.6vw, 2.1rem); font-weight: 700; line-height: 1; }
+  .big.ok { color: var(--ok); } .big.y { color: var(--warn); } .big.b { color: var(--brand); }
+
+  ul { margin: .2rem 0 0; padding-left: 1.15rem; }
+  li { font-size: clamp(.88rem, 1.15vw, 1.02rem); line-height: 1.6; color: #cbd5e1; margin: .35rem 0; }
+  li::marker { color: var(--brand); }
+
+  .quote {
+    border-left: 3px solid var(--warn); background: rgba(251,191,36,.07);
+    padding: .8rem 1rem; border-radius: 0 8px 8px 0; font-size: .92rem; color: #fde68a;
+    max-width: 68ch;
+  }
+  .note {
+    border: 1px solid #24506b; background: rgba(56,189,248,.08);
+    padding: .8rem 1rem; border-radius: 10px; font-size: .9rem; color: #bae6fd;
+  }
+  .good { border-color: #1d6b56; background: rgba(52,211,153,.09); color: #bbf7d0; }
+  .badc { border-color: #6b2233; background: rgba(251,113,133,.09); color: #fecdd3; }
+
+  svg.diagram { width: 100%; height: auto; display: block; max-height: 52vh; }
+  .diagram-wrap {
+    background: #08101d; border: 1px solid #1d2b42; border-radius: 14px;
+    padding: 1rem .9rem .6rem; margin: .4rem 0;
+  }
+  /* Dar ekranda semayi kucultmek yerine yatay kaydirilabilir yap. */
+  @media (max-width: 820px) {
+    .diagram-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .diagram-wrap svg.diagram { min-width: 720px; max-height: none; }
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: .84rem; margin-top: .4rem; }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #22314a; vertical-align: top; }
+  th { color: var(--muted); font-size: .68rem; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; }
+  td code { font-size: .8em; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: .4rem; font-size: .74rem; font-weight: 600;
+    padding: .22rem .6rem; border-radius: 99px; border: 1px solid;
+  }
+  .chip.ok { color: var(--ok); border-color: rgba(52,211,153,.45); background: rgba(52,211,153,.1); }
+  .chip.y { color: var(--warn); border-color: rgba(251,191,36,.45); background: rgba(251,191,36,.1); }
+  .chip.b { color: var(--brand); border-color: rgba(56,189,248,.45); background: rgba(56,189,248,.1); }
+
+  /* ---------------- alt bar ---------------- */
+  .hud {
+    position: fixed; left: 0; right: 0; bottom: 0; height: 44px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.6rem; font-size: .72rem; color: var(--muted2);
+    background: linear-gradient(to top, rgba(11,18,32,.96), rgba(11,18,32,0));
+    pointer-events: none;
+  }
+  .hud .brand { letter-spacing: .5px; }
+  .hud .brand b { color: var(--muted); }
+  .hud .counter { font-variant-numeric: tabular-nums; }
+  .progress { position: fixed; left: 0; top: 0; height: 3px; background: var(--brand); z-index: 10; transition: width .22s ease; }
+
+  .help {
+    position: fixed; right: 1.4rem; top: 1.1rem; font-size: .68rem; color: var(--muted2);
+    background: rgba(19,29,48,.9); border: 1px solid #22314a; border-radius: 8px;
+    padding: .4rem .65rem; line-height: 1.7; z-index: 9;
+  }
+  .help kbd {
+    font-family: inherit; background: #0b1524; border: 1px solid #2a3a55; border-radius: 4px;
+    padding: .05rem .32rem; color: var(--muted);
+  }
+  @media (max-width: 900px) {
+    .help { display: none; }
+    .g3, .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .slide { padding: 4.5vh 5vw 8vh; }
+  }
+  @media (max-width: 620px) {
+    .g2, .g3, .g4 { grid-template-columns: 1fr; }
+    .slide { padding: 4vh 5vw 9vh; }
+    .hud { font-size: .65rem; padding: 0 1rem; }
+  }
+
+  /* ---------------- yazdirma ---------------- */
+  @media print {
+    @page { size: landscape; margin: 0; }
+    body { overflow: visible; background: #fff; }
+    .stage { position: static; display: block; }
+    .slide {
+      display: flex !important; position: relative; inset: auto;
+      page-break-after: always; break-after: page;
+      height: 100vh; padding: 4vh 4vw;
+      background: #fff; color: #111; animation: none;
+    }
+    .hud, .progress, .help { display: none; }
+    h1, h2, h3, b, strong { color: #111 !important; }
+    p, li, td, .card p { color: #333 !important; }
+    .card, .diagram-wrap, .note, .quote { background: #f7f7f7 !important; border-color: #ccc !important; }
+    .dim { color: #666 !important; }
+    .hl, .hl-g, .hl-y, .hl-r { color: #0b6 !important; }
+    code { background: #eee !important; color: #111 !important; border-color: #ccc !important; }
+    svg text { fill: #111 !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="help">
+  <kbd>→</kbd> ileri · <kbd>←</kbd> geri<br>
+  <kbd>F</kbd> tam ekran · <kbd>Home</kbd>/<kbd>End</kbd><br>
+  <kbd>P</kbd> yazdır / PDF
+</div>
+
+<div class="stage" id="stage">
+
+  <!-- 1 -->
+  <section class="slide active">
+    <div class="kicker">Teknik sunum · 14 slayt</div>
+    <h1>Canlı Veri Çekme<br>Mimarisi</h1>
+    <p class="lead">
+      Bir dış sistemdeki verinin, kayıp ve mükerrer oluşturmadan
+      kendi MSSQL veritabanımıza <b>sürekli</b> aktarılması.
+    </p>
+    <div class="grid g4" style="margin-top:2.2rem">
+      <div class="card tight"><div class="num">Kaynak</div><div class="big b">API</div><p>Dış sistem; yalnızca HTTP/JSON sunar</p></div>
+      <div class="card tight"><div class="num">Hedef</div><div class="big ok">MSSQL</div><p>Kendi veritabanımız; kalıcı ve sorgulanabilir</p></div>
+      <div class="card tight"><div class="num">Yöntem</div><div class="big y">Polling</div><p>Artımlı çekme + checkpoint</p></div>
+      <div class="card tight"><div class="num">Hedef gecikme</div><div class="big">≤ 5 dk</div><p>Near-real-time, kayıpsız</p></div>
+    </div>
+    <p class="dim" style="margin-top:1.4rem;font-size:.82rem">
+      DentSync Demo · MSSQL + Python · sentetik veriyle uçtan uca doğrulanmış
+    </p>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="kicker">Problem</div>
+    <h2>Neden basitçe “veriyi çek” demek yetmiyor?</h2>
+    <p>İlk akla gelen çözüm her turda tüm veriyi çekmektir. 2.000 kayıtta çalışır; 2 milyonda çalışmaz.</p>
+    <div class="grid g2" style="margin-top:1.2rem">
+      <div class="card">
+        <h3 class="hl-r">Naif yaklaşımın 5 kırılma noktası</h3>
+        <ul>
+          <li>Her turda <b>tüm</b> veriyi çekmek → gereksiz yük ve yavaşlık</li>
+          <li>Aynı kaydı iki kez yazmak → <b>mükerrer</b> satırlar</li>
+          <li>Yarıda kalan aktarım → yarım/bozuk veri</li>
+          <li>Zaman sınırındaki kayıt → <b>sessizce kaybolur</b></li>
+          <li>Hata “başarılı” görünür → kimse fark etmez</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="hl-g">Bu mimarinin cevapları</h3>
+        <ul>
+          <li><b>Artımlı çekme</b> — yalnızca değişenler</li>
+          <li><b>Upsert + UNIQUE indeks</b> — mükerrer imkânsız</li>
+          <li><b>Sayfa bazlı transaction</b> — yarım yazma yok</li>
+          <li><b>120 sn örtüşme</b> — sınır kaydı kaçmaz</li>
+          <li><b>SyncLog + checkpoint</b> — hata görünür, telafi edilir</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note" style="margin-top:1rem">
+      Kural: <b>kaynak sistem doğruluk kaynağıdır.</b> Hedef veritabanı onun denetlenebilir bir kopyasıdır.
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="kicker">Büyük resim</div>
+    <h2>Uçtan uca akış</h2>
+    <div class="diagram-wrap">
+      <svg class="diagram" viewBox="0 0 1080 300" role="img" aria-label="Veri akış şeması">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#64748b"/>
+          </marker>
+          <marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#38bdf8"/>
+          </marker>
+          <marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#34d399"/>
+          </marker>
+          <marker id="ary" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#fbbf24"/>
+          </marker>
+        </defs>
+        <g font-family="system-ui, Segoe UI, sans-serif">
+          <rect x="14" y="52" width="168" height="92" rx="11" fill="#131d30" stroke="#2a3a55"/>
+          <text x="98" y="88" text-anchor="middle" font-size="14" font-weight="700" fill="#f1f5f9">Kaynak sistem</text>
+          <text x="98" y="108" text-anchor="middle" font-size="11" fill="#38bdf8">API · :8001</text>
+          <text x="98" y="125" text-anchor="middle" font-size="10" fill="#64748b">yalnızca HTTP/JSON</text>
+
+          <rect x="232" y="52" width="184" height="92" rx="11" fill="#1a2740" stroke="#818cf8"/>
+          <text x="324" y="86" text-anchor="middle" font-size="14" font-weight="700" fill="#f1f5f9">Sync Engine</text>
+          <text x="324" y="105" text-anchor="middle" font-size="10.5" fill="#c7d2fe">doğrula · upsert · retry</text>
+          <text x="324" y="122" text-anchor="middle" font-size="10" fill="#64748b">checkpoint yönetimi</text>
+
+          <rect x="466" y="52" width="168" height="92" rx="11" fill="#0e2f27" stroke="#34d399"/>
+          <text x="550" y="88" text-anchor="middle" font-size="14" font-weight="700" fill="#f1f5f9">MSSQL</text>
+          <text x="550" y="108" text-anchor="middle" font-size="11" fill="#6ee7b7">DentSyncDemo</text>
+          <text x="550" y="125" text-anchor="middle" font-size="10" fill="#64748b">5 tablo · FK · UNIQUE</text>
+
+          <rect x="684" y="52" width="168" height="92" rx="11" fill="#131d30" stroke="#38bdf8"/>
+          <text x="768" y="88" text-anchor="middle" font-size="14" font-weight="700" fill="#f1f5f9">Hedef API</text>
+          <text x="768" y="108" text-anchor="middle" font-size="11" fill="#38bdf8">:8000</text>
+          <text x="768" y="125" text-anchor="middle" font-size="10" fill="#64748b">filtre · analitik</text>
+
+          <rect x="902" y="52" width="164" height="92" rx="11" fill="#131d30" stroke="#2a3a55"/>
+          <text x="984" y="88" text-anchor="middle" font-size="14" font-weight="700" fill="#f1f5f9">Kullanıcı</text>
+          <text x="984" y="108" text-anchor="middle" font-size="11" fill="#94a3b8">panel · istemci</text>
+          <text x="984" y="125" text-anchor="middle" font-size="10" fill="#64748b">10 sn'de bir okur</text>
+
+          <line x1="182" y1="98" x2="228" y2="98" stroke="#38bdf8" stroke-width="1.8" marker-end="url(#arb)"/>
+          <text x="205" y="90" text-anchor="middle" font-size="9" fill="#7dd3fc">GET</text>
+          <line x1="416" y1="98" x2="462" y2="98" stroke="#34d399" stroke-width="1.8" marker-end="url(#arg)"/>
+          <text x="439" y="90" text-anchor="middle" font-size="9" fill="#6ee7b7">SQL</text>
+          <line x1="634" y1="98" x2="680" y2="98" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar)"/>
+          <text x="657" y="90" text-anchor="middle" font-size="9" fill="#94a3b8">oku</text>
+          <line x1="852" y1="98" x2="898" y2="98" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar)"/>
+          <text x="875" y="90" text-anchor="middle" font-size="9" fill="#94a3b8">JSON</text>
+
+          <rect x="232" y="200" width="184" height="46" rx="9" fill="#16233a" stroke="#475569" stroke-dasharray="4 3"/>
+          <text x="324" y="220" text-anchor="middle" font-size="11" font-weight="600" fill="#cbd5e1">Task Scheduler</text>
+          <text x="324" y="236" text-anchor="middle" font-size="9.5" fill="#64748b">her 5 dk · veya elle</text>
+          <line x1="324" y1="200" x2="324" y2="148" stroke="#818cf8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arb)"/>
+
+          <path d="M 550 144 L 550 262 L 324 262" fill="none" stroke="#fbbf24" stroke-width="1.4"
+                stroke-dasharray="5 4" marker-end="url(#ary)"/>
+          <text x="560" y="256" font-size="10" fill="#fbbf24">checkpoint = son başarılı aktarım</text>
+
+          <text x="14" y="34" font-size="11" font-weight="700" fill="#38bdf8">DIŞ DÜNYA</text>
+          <text x="466" y="34" font-size="11" font-weight="700" fill="#34d399">BİZİM SİSTEMİMİZ</text>
+        </g>
+      </svg>
+    </div>
+    <p class="dim" style="font-size:.85rem;margin-top:.4rem">
+      Panel ve istemci <b>asla</b> MSSQL'e doğrudan bağlanmaz; yalnızca hedef API'yi çağırır.
+    </p>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="kicker">Katmanlar</div>
+    <h2>Üç ayrı “canlılık” var — karıştırılmamalı</h2>
+    <div class="grid g3" style="margin-top:1rem">
+      <div class="card">
+        <div class="num">Katman 1 · Aktarım</div>
+        <div class="big b">5 dk</div>
+        <p>Kaynak → MSSQL. Veri <b>yalnızca</b> burada değişir. Task Scheduler veya elle.</p>
+      </div>
+      <div class="card">
+        <div class="num">Katman 2 · Okuma</div>
+        <div class="big">10 sn</div>
+        <p>Panel MSSQL'den yeniden okur. <b>Yeni veri üretmez</b>; mevcut veriyi tazeler.</p>
+      </div>
+      <div class="card">
+        <div class="num">Katman 3 · Olay</div>
+        <div class="big y">anında</div>
+        <p>Panelden tetikleme: <code>POST /api/v1/sync/run</code>. Kaynak değişince hemen çeker.</p>
+      </div>
+    </div>
+    <div class="quote" style="margin-top:1.4rem">
+      Panelin 10 saniyede bir yenilenmesi sistemi “gerçek zamanlı” yapmaz.
+      Doğru tanım: <b>near-real-time</b> — en geç bir senkronizasyon aralığı kadar gecikme.
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="kicker">Artımlı çekme</div>
+    <h2>Her turda yalnızca <span class="hl">değişenleri</span> iste</h2>
+    <p>Kaynak API <code>updated_since</code> parametresini destekler. Motor son başarılı aktarımın
+      zamanını <code>SyncState</code> tablosundan okur ve yalnızca sonrasını ister.</p>
+    <div class="diagram-wrap">
+      <svg class="diagram" viewBox="0 0 1080 210" role="img" aria-label="Artımlı çekme">
+        <defs>
+          <marker id="t2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+          </marker>
+        </defs>
+        <g font-family="system-ui, Segoe UI, sans-serif">
+          <line x1="60" y1="120" x2="1020" y2="120" stroke="#475569" stroke-width="1.8" marker-end="url(#t2)"/>
+          <rect x="60" y="96" width="330" height="48" rx="6" fill="#334155" opacity=".35"/>
+          <text x="225" y="126" text-anchor="middle" font-size="12" fill="#94a3b8">zaten aktarıldı (atlanır)</text>
+
+          <rect x="390" y="96" width="620" height="48" rx="6" fill="#0e7490" opacity=".3" stroke="#38bdf8"/>
+          <text x="700" y="126" text-anchor="middle" font-size="12" fill="#7dd3fc">bu turda çekilecek: updated_since = checkpoint</text>
+
+          <line x1="392" y1="76" x2="392" y2="168" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4 3"/>
+          <text x="392" y="66" text-anchor="middle" font-size="11" font-weight="700" fill="#fbbf24">checkpoint</text>
+
+          <circle cx="560" cy="120" r="7" fill="#34d399"/>
+          <circle cx="720" cy="120" r="7" fill="#34d399"/>
+          <circle cx="880" cy="120" r="7" fill="#34d399"/>
+          <text x="560" y="182" text-anchor="middle" font-size="10" fill="#6ee7b7">değişen kayıt</text>
+
+          <text x="60" y="40" font-size="13" font-weight="700" fill="#f1f5f9">Veri hacmi büyüdükçe maliyet sabit kalır</text>
+          <text x="60" y="58" font-size="11" fill="#94a3b8">2.000 kayıt da olsa 2 milyon da olsa, tur başına yalnızca değişenler taşınır.</text>
+        </g>
+      </svg>
+    </div>
+    <div class="grid g2" style="margin-top:.6rem">
+      <div class="note">İlk çalıştırmada checkpoint <code>NULL</code> → tüm veri çekilir (tam çekim).</div>
+      <div class="note good">Sonraki turlar yalnızca farkı çeker; süre ve yük düşer.</div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="kicker">Sınır problemi</div>
+    <h2>Zaman damgası sınırında kayıt kaçmasın: <span class="hl-y">örtüşme</span></h2>
+    <p><code>UpdatedAt &gt; checkpoint</code> kullanılsaydı, tam checkpoint anındaki kayıt bir sonraki turda da görülmezdi.
+      Çözüm: geriye doğru <b>120 saniyelik örtüşme</b>.</p>
+    <div class="diagram-wrap">
+      <svg class="diagram" viewBox="0 0 1080 240" role="img" aria-label="Örtüşme penceresi">
+        <defs>
+          <marker id="t3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+          </marker>
+        </defs>
+        <g font-family="system-ui, Segoe UI, sans-serif">
+          <line x1="70" y1="120" x2="1010" y2="120" stroke="#475569" stroke-width="1.8" marker-end="url(#t3)"/>
+          <g font-size="10.5" fill="#64748b">
+            <line x1="200" y1="113" x2="200" y2="127" stroke="#64748b"/><text x="200" y="143" text-anchor="middle">09:55</text>
+            <line x1="380" y1="113" x2="380" y2="127" stroke="#64748b"/><text x="380" y="143" text-anchor="middle">09:58</text>
+            <line x1="560" y1="113" x2="560" y2="127" stroke="#64748b"/><text x="560" y="143" text-anchor="middle">10:00</text>
+            <line x1="740" y1="113" x2="740" y2="127" stroke="#64748b"/><text x="740" y="143" text-anchor="middle">10:02</text>
+            <line x1="920" y1="113" x2="920" y2="127" stroke="#64748b"/><text x="920" y="143" text-anchor="middle">10:05</text>
+          </g>
+          <rect x="380" y="80" width="180" height="20" rx="4" fill="#fbbf24" opacity=".2" stroke="#fbbf24" stroke-dasharray="3 2"/>
+          <text x="470" y="72" text-anchor="middle" font-size="10" fill="#fbbf24">örtüşme −120 sn</text>
+
+          <line x1="560" y1="40" x2="560" y2="172" stroke="#fbbf24" stroke-width="1.6" stroke-dasharray="4 3"/>
+          <text x="560" y="32" text-anchor="middle" font-size="11" font-weight="700" fill="#fbbf24">son checkpoint (10:00)</text>
+
+          <circle cx="470" cy="120" r="6" fill="#34d399"/>
+          <circle cx="560" cy="120" r="6" fill="#34d399"/>
+          <circle cx="730" cy="120" r="6" fill="#34d399"/>
+
+          <rect x="380" y="176" width="640" height="24" rx="5" fill="#0e7490" opacity=".28" stroke="#38bdf8"/>
+          <text x="700" y="193" text-anchor="middle" font-size="11" fill="#7dd3fc">sorgu: updated_since = 09:58 → şimdi</text>
+
+          <text x="560" y="228" text-anchor="middle" font-size="10.5" fill="#6ee7b7">10:00:00'daki kayıt örtüşme sayesinde listede kalır</text>
+        </g>
+      </svg>
+    </div>
+    <div class="quote">
+      Fazladan işlemek sorun değildir: <b>upsert idempotenttir.</b> Kayıp veri ise geri getirilemez.
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="kicker">Idempotency</div>
+    <h2>Upsert: aynı kayıt 100 kez gelse de <span class="hl-g">tek satır</span></h2>
+    <div class="grid g2" style="margin-top:1rem">
+      <div class="card">
+        <h3>Önce: dış kimliğe göre ara</h3>
+        <p><code>SELECT ... WHERE ExternalAppointmentId IN (...)</code><br>
+          Tek sorguda sayfanın tamamının mevcut hali çekilir.</p>
+      </div>
+      <div class="card">
+        <h3>Sonra: ekle veya güncelle</h3>
+        <p>Yoksa <b>INSERT</b>, varsa alan alan karşılaştır ve <b>UPDATE</b>.
+          Değişmemişse yazma yapılmaz.</p>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:1rem">
+      <div class="card tight">
+        <div class="num">Güvence 1</div>
+        <div class="big" style="font-size:1rem">Uygulama mantığı</div>
+        <p>Dış kimlik anahtarıyla eşleştirme; iki kez ekleme yolu yok.</p>
+      </div>
+      <div class="card tight">
+        <div class="num">Güvence 2</div>
+        <div class="big" style="font-size:1rem">UNIQUE kısıt</div>
+        <p>Kod hatalı olsa bile MSSQL ikinci satırı reddeder.</p>
+      </div>
+      <div class="card tight">
+        <div class="num">Güvence 3</div>
+        <div class="big" style="font-size:1rem">Test</div>
+        <p><code>test_repeated_sync_does_not_duplicate</code> her koşuda doğrular.</p>
+      </div>
+    </div>
+    <div class="note good" style="margin-top:1.1rem">
+      Aynı işi tekrar çalıştırmak güvenlidir. Bu, hata sonrası “kaldığı yerden devam” stratejisinin temelidir.
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="kicker">Tutarlılık</div>
+    <h2>İşlem sırası ve checkpoint disiplini</h2>
+    <div class="grid g2" style="margin-top:.6rem">
+      <div class="card">
+        <h3 class="hl-g">Doğru: sayfa bazlı transaction</h3>
+        <ul>
+          <li>Her sayfa: <code>BEGIN → upsert → COMMIT</code></li>
+          <li>Hata olursa o sayfa <b>geri alınır</b></li>
+          <li>Checkpoint yalnızca <b>tüm sayfalar</b> bitince ilerler</li>
+          <li>Yeniden çalışma aynı veriyi işler — zararsız</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="hl-r">Yanlış: her sayfada checkpoint</h3>
+        <ul>
+          <li>3. sayfada hata → ilk 2 sayfa “aktarıldı” sayılır</li>
+          <li>Eksik sayfa bir daha istenmez</li>
+          <li>Sessiz veri kaybı — en tehlikeli hata türü</li>
+        </ul>
+      </div>
+    </div>
+    <table style="margin-top:1.1rem">
+      <tr><th>Sıra</th><th>Tür</th><th>Neden bu sırada?</th></tr>
+      <tr><td>1</td><td><code>clinics</code></td><td>Hastalar kliniğe FK ile bağlı</td></tr>
+      <tr><td>2</td><td><code>patients</code></td><td>Randevular hastaya FK ile bağlı</td></tr>
+      <tr><td>3</td><td><code>appointments</code></td><td>İki ebeveyn de hazır olmalı</td></tr>
+    </table>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <div class="kicker">Dayanıklılık</div>
+    <h2>Hata olunca ne olur? <span class="hl-y">Retry</span> mı, düzeltme mi?</h2>
+    <div class="grid g2" style="margin-top:.8rem">
+      <div class="card" style="border-color:#6b5a1f">
+        <h3 class="hl-y">Geçici hata → tekrar dene</h3>
+        <ul>
+          <li><code>429</code>, <code>5xx</code>, timeout, bağlantı kopması</li>
+          <li>Üstel bekleme: 1s → 2s → 4s</li>
+          <li>Sınırlı deneme (varsayılan 4) — sonsuz döngü yok</li>
+          <li><code>Retry-After</code> başlığı varsa ona uyulur</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:#6b2233">
+        <h3 class="hl-r">Kalıcı hata → düzeltme gerekir</h3>
+        <ul>
+          <li>Şema dışı JSON, geçersiz durum değeri</li>
+          <li>FK ihlali: kaynakta ebeveyn kayıt yok</li>
+          <li>Tekrar denemek aynı hatayı verir → <b>denenmez</b></li>
+          <li>Hata özeti <code>SyncLog.ErrorSummary</code>'ye yazılır</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:1rem">
+      <div class="card tight"><div class="num">Kaynak kapalı</div><p><code>SyncLog = Failed</code>, checkpoint ilerlemez, sonraki tur toparlar</p></div>
+      <div class="card tight"><div class="num">Bozuk JSON</div><p>Pydantic reddeder; veritabanına <b>hiçbir şey</b> yazılmaz</p></div>
+      <div class="card tight"><div class="num">MSSQL kapalı</div><p>Çıkış kodu 2, açık hata; hiçbir iş başarılı görünmez</p></div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <div class="kicker">Eşzamanlılık</div>
+    <h2>Aynı iş iki kez başlamasın</h2>
+    <div class="grid g2" style="margin-top:1rem">
+      <div class="card">
+        <div class="num">Katman 1 · Dosya kilidi</div>
+        <h3><code>logs/sync.lock</code></h3>
+        <p>Komut satırından veya zamanlayıcıdan gelen işler için.
+          Kilit 1 saatten eskiyse “sahipsiz” kabul edilip devralınır.</p>
+      </div>
+      <div class="card">
+        <div class="num">Katman 2 · Süreç içi kilit</div>
+        <h3><code>threading.Lock</code></h3>
+        <p>Hedef API'den gelen <code>POST /sync/run</code> çağrıları için.
+          İkinci istek <b>409 Conflict</b> alır. Kullanıcıya açık mesaj döner.</p>
+      </div>
+    </div>
+    <div class="note" style="margin-top:1.2rem">
+      Kilit, transaction'ın yerini tutmaz. Sayfa bazlı transaction'lar hâlâ gereklidir;
+      kilit yalnızca aynı işin iki kez <b>başlamasını</b> engeller.
+    </div>
+    <p class="dim" style="margin-top:.9rem;font-size:.86rem">
+      Upsert sayesinde çift çalışma veriyi bozmaz — yalnızca gereksiz yük ve karışık log üretir.
+    </p>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide">
+    <div class="kicker">Zamanlama</div>
+    <h2>Sürekli çalışma ve gerçekçi beklenti</h2>
+    <div class="grid g4" style="margin-top:.8rem">
+      <div class="card tight"><div class="num">Varsayılan</div><div class="big b">5 dk</div><p>Task Scheduler turu</p></div>
+      <div class="card tight"><div class="num">En hızlı pratik</div><div class="big">1 dk</div><p>Aralığı düşürmek yeterli</p></div>
+      <div class="card tight"><div class="num">Olay bazlı</div><div class="big y">sn</div><p><code>POST /sync/run</code></p></div>
+      <div class="card tight"><div class="num">Gerçek zamanlı</div><div class="big">webhook</div><p>Kuyruk + CDC gerekir</p></div>
+    </div>
+    <table style="margin-top:1.1rem">
+      <tr><th>Yaklaşım</th><th>Gecikme</th><th>Karmaşıklık</th><th>Ne zaman?</th></tr>
+      <tr><td>5 dakikalık polling</td><td>≤ 5 dk</td><td class="hl-g">Düşük</td><td>Varsayılan; çoğu senaryo</td></tr>
+      <tr><td>1 dakikalık polling</td><td>≤ 1 dk</td><td class="hl-g">Düşük</td><td>Küçük veri, hızlı ihtiyaç</td></tr>
+      <tr><td>Olay bazlı tetikleme</td><td>saniyeler</td><td class="hl-y">Orta</td><td>Kaynak değişikliği bildirebiliyorsa</td></tr>
+      <tr><td>Webhook / CDC</td><td>&lt; 1 sn</td><td class="hl-r">Yüksek</td><td>Gerçek zamanlı akış zorunluysa</td></tr>
+    </table>
+    <p class="dim" style="margin-top:.7rem;font-size:.85rem">
+      Polling seçildi: webhook gerektirmez, ağ kesintisinden sonra kendini toparlar, her tur denetlenebilir.
+    </p>
+  </section>
+
+  <!-- 12 -->
+  <section class="slide">
+    <div class="kicker">Gözlemlenebilirlik</div>
+    <h2>“Çalışıyor” demek yetmez — <span class="hl">kanıt</span> gerekir</h2>
+    <div class="grid g3" style="margin-top:.8rem">
+      <div class="card">
+        <div class="num">SyncState</div>
+        <p>Tür başına son checkpoint ve son başarılı çalışma.<br>
+          <span class="dim">Panelde “gecikme” olarak görünür.</span></p>
+      </div>
+      <div class="card">
+        <div class="num">SyncLog</div>
+        <p>Her tur: okunan / eklenen / güncellenen / silinen / hata + süre + durum.<br>
+          <span class="dim">Basarisiz iş asla Success yazılmaz.</span></p>
+      </div>
+      <div class="card">
+        <div class="num">Uçtan uca test</div>
+        <p>Kaynakta değiştir → senkronize et → hedef API'den doğrula.<br>
+          <span class="dim">66 otomatik test bunu her koşuda yapar.</span></p>
+      </div>
+    </div>
+    <div class="diagram-wrap" style="margin-top:1rem">
+      <svg class="diagram" viewBox="0 0 1080 150" role="img" aria-label="Gözlemlenebilirlik akışı">
+        <g font-family="system-ui, Segoe UI, sans-serif" font-size="11">
+          <rect x="20" y="42" width="180" height="62" rx="9" fill="#131d30" stroke="#2a3a55"/>
+          <text x="110" y="68" text-anchor="middle" font-size="12" font-weight="700" fill="#f1f5f9">Senkronizasyon</text>
+          <text x="110" y="86" text-anchor="middle" font-size="10" fill="#94a3b8">her tur yazar</text>
+
+          <rect x="250" y="24" width="190" height="48" rx="9" fill="#16233a" stroke="#38bdf8"/>
+          <text x="345" y="44" text-anchor="middle" font-size="11.5" font-weight="600" fill="#7dd3fc">SyncState</text>
+          <text x="345" y="60" text-anchor="middle" font-size="9.5" fill="#64748b">checkpoint · lag</text>
+
+          <rect x="250" y="84" width="190" height="48" rx="9" fill="#16233a" stroke="#818cf8"/>
+          <text x="345" y="104" text-anchor="middle" font-size="11.5" font-weight="600" fill="#c7d2fe">SyncLog</text>
+          <text x="345" y="120" text-anchor="middle" font-size="9.5" fill="#64748b">sayımlar · hata özeti</text>
+
+          <rect x="490" y="54" width="170" height="48" rx="9" fill="#0e2f27" stroke="#34d399"/>
+          <text x="575" y="74" text-anchor="middle" font-size="11.5" font-weight="600" fill="#6ee7b7">/analytics/summary</text>
+          <text x="575" y="90" text-anchor="middle" font-size="9.5" fill="#64748b">tek istek, gerçek SQL</text>
+
+          <rect x="710" y="54" width="170" height="48" rx="9" fill="#131d30" stroke="#38bdf8"/>
+          <text x="795" y="74" text-anchor="middle" font-size="11.5" font-weight="600" fill="#f1f5f9">Panel</text>
+          <text x="795" y="90" text-anchor="middle" font-size="9.5" fill="#64748b">sağlık · trend · akış</text>
+
+          <rect x="930" y="54" width="130" height="48" rx="9" fill="#16233a" stroke="#475569"/>
+          <text x="995" y="74" text-anchor="middle" font-size="11.5" font-weight="600" fill="#cbd5e1">Uyarı</text>
+          <text x="995" y="90" text-anchor="middle" font-size="9.5" fill="#64748b">eşik aşımı</text>
+
+          <line x1="200" y1="73" x2="246" y2="48" stroke="#64748b" stroke-width="1.4"/>
+          <line x1="200" y1="73" x2="246" y2="108" stroke="#64748b" stroke-width="1.4"/>
+          <line x1="440" y1="73" x2="486" y2="76" stroke="#64748b" stroke-width="1.4"/>
+          <line x1="660" y1="78" x2="706" y2="78" stroke="#64748b" stroke-width="1.4"/>
+          <line x1="880" y1="78" x2="926" y2="78" stroke="#64748b" stroke-width="1.4"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section class="slide">
+    <div class="kicker">Ölçekleme</div>
+    <h2>Büyüme sırası: önce ölç, sonra karmaşıklaştır</h2>
+    <div class="grid g2" style="margin-top:.7rem">
+      <div class="card">
+        <h3>1 → 3 · Aynı mimari, ayar</h3>
+        <ul>
+          <li>Sayfa boyutunu artır (<code>SYNC_PAGE_SIZE=500</code>)</li>
+          <li>Toplu upsert: satır satır yerine <code>MERGE</code> / TVP</li>
+          <li>İndeksleri koru; sorgu planlarını izle</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>4 → 6 · Mimari ekleme</h3>
+        <ul>
+          <li>Türleri paralel iş akışlarına ayır (FK sırası korunarak)</li>
+          <li>Kuyruk: RabbitMQ / Service Bus + worker'lar</li>
+          <li>Tarih bazlı bölümleme, arşiv tablosu</li>
+        </ul>
+      </div>
+    </div>
+    <div class="quote" style="margin-top:1.2rem">
+      Karar veriyi görmeden verilmez. Önce <code>SyncLog</code>'daki süre ve satır sayılarına bakın;
+      2.000 kayıt için mikro-optimizasyon gereksiz karmaşıklıktır.
+    </div>
+    <p class="dim" style="margin-top:.9rem;font-size:.86rem">
+      Bu demoda 2.000 randevu, 500 hasta, 3 klinik: ilk tur saniyeler içinde, sonraki turlar boş geçiyor.
+    </p>
+  </section>
+
+  <!-- 14 -->
+  <section class="slide">
+    <div class="kicker">Kapanış</div>
+    <h2>Tek cümlelik özet</h2>
+    <p class="lead" style="max-width:70ch">
+      Veriyi <b>yalnızca değiştiği kadar</b> çek, <b>örtüşmeyle</b> sınırı kapat,
+      <b>upsert</b> ile tekrarı zararsız kıl, <b>checkpoint'i en sonda</b> ilerlet ve
+      her turu <b>kaydet</b>. Gerisi ayar.
+    </p>
+    <div class="grid g4" style="margin-top:2rem">
+      <div class="card tight"><div class="num">1</div><h3>Artımlı</h3><p><code>updated_since</code></p></div>
+      <div class="card tight"><div class="num">2</div><h3>Örtüşmeli</h3><p>−120 sn güvenlik</p></div>
+      <div class="card tight"><div class="num">3</div><h3>Idempotent</h3><p>upsert + UNIQUE</p></div>
+      <div class="card tight"><div class="num">4</div><h3>Denetlenebilir</h3><p>SyncLog · SyncState</p></div>
+    </div>
+    <div class="grid g2" style="margin-top:1.6rem">
+      <div class="note">
+        <b>Canlı demo</b><br>
+        <span style="font-size:.85rem">127.0.0.1:8000/dashboard · /mimari · /kilavuz</span>
+      </div>
+      <div class="note good">
+        <b>Başlatmak için</b><br>
+        <span style="font-size:.85rem"><code>python run.py</code> — her şey tek komutla</span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="hud">
+  <span class="brand"><b>DentSync</b> · Canlı Veri Çekme Mimarisi</span>
+  <span class="counter"><span id="cur">1</span> / <span id="total">14</span></span>
+</div>
+
+<script>
+  "use strict";
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const progress = document.getElementById("progress");
+  const curEl = document.getElementById("cur");
+  document.getElementById("total").textContent = slides.length;
+
+  let index = 0;
+
+  function show(next) {
+    index = Math.max(0, Math.min(slides.length - 1, next));
+    slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+    progress.style.width = ((index + 1) / slides.length * 100) + "%";
+    curEl.textContent = index + 1;
+    history.replaceState(null, "", "#" + (index + 1));
+    slides[index].scrollTop = 0;
+  }
+
+  function next() { if (index < slides.length - 1) show(index + 1); }
+  function prev() { if (index > 0) show(index - 1); }
+
+  document.addEventListener("keydown", (event) => {
+    const key = event.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(key)) {
+      event.preventDefault(); next();
+    } else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(key)) {
+      event.preventDefault(); prev();
+    } else if (key === "Home") {
+      event.preventDefault(); show(0);
+    } else if (key === "End") {
+      event.preventDefault(); show(slides.length - 1);
+    } else if (key === "f" || key === "F") {
+      event.preventDefault();
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen?.();
+    } else if (key === "p" || key === "P") {
+      window.print();
+    }
+  });
+
+  // Dokunmatik: sola kaydır = ileri
+  let touchX = null;
+  document.addEventListener("touchstart", (e) => { touchX = e.changedTouches[0].clientX; }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 55) { dx < 0 ? next() : prev(); }
+    touchX = null;
+  }, { passive: true });
+
+  // URL'deki #3 gibi bir slayt numarasindan basla
+  const fromHash = parseInt(location.hash.replace("#", ""), 10);
+  show(Number.isFinite(fromHash) && fromHash > 0 ? fromHash - 1 : 0);
+
+  // Adres cubugundaki #n degisirse (ileri/geri, elle yazma) o slayta git.
+  window.addEventListener("hashchange", () => {
+    const target = parseInt(location.hash.replace("#", ""), 10);
+    if (Number.isFinite(target) && target > 0 && target - 1 !== index) {
+      show(target - 1);
+    }
+  });
+</script>
+</body>
+</html>

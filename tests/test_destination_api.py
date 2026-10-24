@@ -354,11 +354,43 @@ def test_architecture_page_is_served(api):
     assert "cdn." not in body
 
 
+def test_slides_page_is_served(api):
+    response = api.get("/slayt")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    body = response.text
+    assert "Canlı Veri Çekme" in body
+    # 14 slayt ve gezinme mantigi bulunmali.
+    assert body.count('class="slide') >= 14
+    assert "ArrowRight" in body
+    assert "upsert" in body.lower()
+    assert "checkpoint" in body.lower()
+    assert "cdn." not in body
+    assert "cdnjs" not in body
+
+
+def test_all_static_pages_have_no_external_resources(api):
+    for path in ("/dashboard", "/kilavuz", "/mimari", "/slayt"):
+        body = api.get(path).text
+        for marker in ("http://cdn", "https://cdn", "cdnjs", "unpkg.com"):
+            assert marker not in body, f"{path} harici kaynak kullaniyor: {marker}"
+
+
+def test_pages_link_to_each_other(api):
+    """Panelden diger sayfalara gezinme baglantilari kopmamali."""
+    dashboard = api.get("/dashboard").text
+    for path in ("/kilavuz", "/mimari", "/slayt"):
+        assert f'href="{path}"' in dashboard
+    for page in (api.get("/kilavuz").text, api.get("/mimari").text):
+        assert 'href="/slayt"' in page
+
+
 def test_root_lists_documentation_pages(api):
     body = api.get("/").json()
     assert body["guide"] == "/kilavuz"
     assert body["architecture"] == "/mimari"
     assert body["dashboard"] == "/dashboard"
+    assert body["slides"] == "/slayt"
 
 
 def test_cors_allows_local_dashboard_origin(api):

@@ -554,7 +554,7 @@
       hastalar kliniğe, randevular ikisine de FK ile bağlıdır. Önce ebeveyn kayıtlar yazılmalıdır.</p>
 
     <div class="diagram">
-      <svg viewBox="0 0 1040 520" role="img" aria-label="Senkronizasyon sıra şeması">
+      <svg viewBox="0 0 1040 570" role="img" aria-label="Senkronizasyon sıra şeması">
         <defs>
           <marker id="sq" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
@@ -584,56 +584,57 @@
             <rect x="810" y="14" width="168" height="36" rx="8" fill="#0e2f27" stroke="#10b981"/>
             <text x="894" y="37" text-anchor="middle" fill="#6ee7b7">MSSQL</text>
           </g>
-          <line x1="110" y1="50" x2="110" y2="488" stroke="#334155" stroke-width="1" stroke-dasharray="4 4"/>
-          <line x1="370" y1="50" x2="370" y2="488" stroke="#4c4585" stroke-width="1" stroke-dasharray="4 4"/>
-          <line x1="632" y1="50" x2="632" y2="488" stroke="#1e5a7a" stroke-width="1" stroke-dasharray="4 4"/>
-          <line x1="894" y1="50" x2="894" y2="488" stroke="#1d6b56" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="110" y1="50" x2="110" y2="540" stroke="#334155" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="370" y1="50" x2="370" y2="540" stroke="#4c4585" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="632" y1="50" x2="632" y2="540" stroke="#1e5a7a" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="894" y1="50" x2="894" y2="540" stroke="#1d6b56" stroke-width="1" stroke-dasharray="4 4"/>
 
           <!-- 1 trigger -->
-          <text x="238" y="82" text-anchor="middle" font-size="11" fill="#94a3b8">1 · turu başlat (5 dk)</text>
-          <line x1="110" y1="90" x2="366" y2="90" stroke="#64748b" stroke-width="1.5" marker-end="url(#sqg)"/>
+          <text x="238" y="84" text-anchor="middle" font-size="11" fill="#94a3b8">1 · turu başlat (5 dk)</text>
+          <line x1="110" y1="98" x2="366" y2="98" stroke="#64748b" stroke-width="1.5" marker-end="url(#sqg)"/>
 
           <!-- 2 checkpoint -->
-          <text x="632" y="120" text-anchor="middle" font-size="11" fill="#94a3b8">2 · SELECT LastSyncedAt FROM SyncState</text>
-          <line x1="370" y1="128" x2="890" y2="128" stroke="#64748b" stroke-width="1.5" marker-end="url(#sqg)"/>
-          <text x="632" y="152" text-anchor="middle" font-size="10.5" fill="#64748b">checkpoint (NULL ise tam çekim)</text>
-          <line x1="894" y1="160" x2="370" y2="160" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#sqg)"/>
+          <text x="632" y="130" text-anchor="middle" font-size="11" fill="#94a3b8">2 · SELECT LastSyncedAt FROM SyncState</text>
+          <line x1="370" y1="144" x2="890" y2="144" stroke="#64748b" stroke-width="1.5" marker-end="url(#sqg)"/>
+          <text x="632" y="166" text-anchor="middle" font-size="10.5" fill="#64748b">checkpoint (NULL ise tam çekim)</text>
+          <line x1="894" y1="182" x2="370" y2="182" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#sqg)"/>
 
           <!-- 3 request -->
-          <text x="501" y="190" text-anchor="middle" font-size="11" fill="#7dd3fc">3 · GET /source/appointments</text>
-          <line x1="370" y1="198" x2="628" y2="198" stroke="#38bdf8" stroke-width="1.8" marker-end="url(#sq)"/>
-          <text x="501" y="214" text-anchor="middle" font-size="10" fill="#64748b">limit=200 · offset=0 · updated_since</text>
+          <text x="501" y="226" text-anchor="middle" font-size="11" fill="#7dd3fc">3 · GET /source/appointments</text>
+          <line x1="370" y1="240" x2="628" y2="240" stroke="#38bdf8" stroke-width="1.8" marker-end="url(#sq)"/>
+          <text x="501" y="258" text-anchor="middle" font-size="10" fill="#64748b">limit=200 · offset=0 · updated_since</text>
 
           <!-- 4 response + validate -->
-          <text x="501" y="240" text-anchor="middle" font-size="11" fill="#7dd3fc">4 · JSON + pagination</text>
-          <line x1="632" y1="248" x2="374" y2="248" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#sq)"/>
-          <text x="370" y="270" font-size="10.5" fill="#c7d2fe">↳ Pydantic doğrulama · offset kontrolü</text>
+          <line x1="632" y1="276" x2="374" y2="276" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#sq)"/>
+          <text x="501" y="294" text-anchor="middle" font-size="11" fill="#7dd3fc">4 · JSON + pagination</text>
+          <text x="370" y="312" font-size="10.5" fill="#c7d2fe">↳ Pydantic doğrulama · offset kontrolü</text>
 
           <!-- 5 upsert -->
-          <text x="632" y="298" text-anchor="middle" font-size="11" fill="#6ee7b7">5 · BEGIN TRAN · mevcut kayıtları seç (IN ids)</text>
-          <line x1="370" y1="306" x2="890" y2="306" stroke="#34d399" stroke-width="1.8" marker-end="url(#sqgr)"/>
-          <text x="632" y="326" text-anchor="middle" font-size="10.5" fill="#94a3b8">INSERT yeni · UPDATE değişen · IsDeleted işaretle</text>
+          <text x="632" y="338" text-anchor="middle" font-size="11" fill="#6ee7b7">5 · BEGIN TRAN · mevcut kayıtları seç (IN ids)</text>
+          <line x1="370" y1="352" x2="890" y2="352" stroke="#34d399" stroke-width="1.8" marker-end="url(#sqgr)"/>
+          <text x="632" y="370" text-anchor="middle" font-size="10.5" fill="#94a3b8">INSERT yeni · UPDATE değişen · IsDeleted işaretle</text>
 
           <!-- 6 commit -->
-          <text x="632" y="352" text-anchor="middle" font-size="10.5" fill="#64748b">6 · COMMIT (sayfa başına)</text>
-          <line x1="894" y1="360" x2="374" y2="360" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#sqg)"/>
+          <line x1="894" y1="388" x2="374" y2="388" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#sqg)"/>
+          <text x="632" y="406" text-anchor="middle" font-size="10.5" fill="#64748b">6 · COMMIT (sayfa başına)</text>
 
-          <!-- 7 loop -->
-          <path d="M 628 384 L 628 400 L 392 400" fill="none" stroke="#f59e0b" stroke-width="1.4"
+          <!-- 7 loop: COMMIT sonrası has_more → sonraki sayfa (yeniden istek) -->
+          <path d="M 366 388 L 258 388 L 258 240 L 362 240" fill="none" stroke="#f59e0b" stroke-width="1.4"
                 stroke-dasharray="4 3" marker-end="url(#sqo)"/>
-          <text x="632" y="394" font-size="10.5" fill="#fbbf24">7 · has_more → sonraki sayfa (offset = next_offset)</text>
+          <text x="238" y="314" font-size="10" fill="#fbbf24" text-anchor="middle"
+                transform="rotate(-90 238 314)">7 · sonraki sayfa</text>
 
           <!-- 8 state -->
-          <text x="632" y="428" text-anchor="middle" font-size="11" fill="#6ee7b7">8 · tüm sayfalar bitti → SyncState güncelle</text>
-          <line x1="370" y1="436" x2="890" y2="436" stroke="#34d399" stroke-width="1.5" marker-end="url(#sqgr)"/>
+          <text x="632" y="468" text-anchor="middle" font-size="11" fill="#6ee7b7">8 · tüm sayfalar bitti → SyncState güncelle</text>
+          <line x1="370" y1="482" x2="890" y2="482" stroke="#34d399" stroke-width="1.5" marker-end="url(#sqgr)"/>
 
           <!-- 9 logs -->
-          <text x="632" y="460" text-anchor="middle" font-size="11" fill="#94a3b8">9 · SyncLog = Success + sayımlar + süre</text>
-          <line x1="370" y1="468" x2="890" y2="468" stroke="#64748b" stroke-width="1.2" marker-end="url(#sqg)"/>
+          <text x="632" y="508" text-anchor="middle" font-size="11" fill="#94a3b8">9 · SyncLog = Success + sayımlar + süre</text>
+          <line x1="370" y1="522" x2="890" y2="522" stroke="#64748b" stroke-width="1.2" marker-end="url(#sqg)"/>
 
           <!-- notes -->
-          <rect x="26" y="496" width="960" height="22" rx="6" fill="#151d2e" stroke="#2a3850"/>
-          <text x="40" y="511" font-size="10" fill="#94a3b8">Sıra: clinics → patients → appointments. Hata olursa 8 ve 9 çalışmaz; SyncLog = Failed yazılır, checkpoint değişmez.</text>
+          <rect x="26" y="536" width="960" height="24" rx="6" fill="#151d2e" stroke="#2a3850"/>
+          <text x="40" y="552" font-size="10" fill="#94a3b8">Sıra: clinics → patients → appointments. Hata olursa 8 ve 9 çalışmaz; SyncLog = Failed yazılır, checkpoint değişmez.</text>
         </g>
       </svg>
       <div class="cap"><b>Şema 3.</b> Tek tür için bir tur; sayfa döngüsü ve checkpoint yalnızca en sonda ilerler.</div>
@@ -655,7 +656,7 @@
       <b>120 saniyelik örtüşme</b> uygular.</p>
 
     <div class="diagram">
-      <svg viewBox="0 0 1040 400" role="img" aria-label="Checkpoint ve örtüşme zaman çizelgesi">
+      <svg viewBox="0 0 1040 420" role="img" aria-label="Checkpoint ve örtüşme zaman çizelgesi">
         <defs>
           <marker id="tl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
@@ -714,7 +715,7 @@
             <circle cx="540" cy="250" r="6" fill="#10b981"/>
             <text x="540" y="374" text-anchor="middle" fill="#6ee7b7">kayıt B · 10:00:00</text>
             <line x1="540" y1="258" x2="540" y2="364" stroke="#1d6b56" stroke-dasharray="2 3"/>
-            <text x="620" y="374" text-anchor="middle" font-size="9.5" fill="#64748b">← tam sınırda güncellendi</text>
+            <text x="540" y="390" text-anchor="middle" font-size="9.5" fill="#64748b">tam sınırda güncellendi → örtüşme yakalar</text>
 
             <circle cx="700" cy="250" r="6" fill="#10b981"/>
             <text x="700" y="350" text-anchor="middle" fill="#6ee7b7">kayıt C · 10:02</text>
@@ -1046,7 +1047,7 @@
       </table>
     </div>
     <p>Testleri kendiniz çalıştırabilirsiniz: <code class="inl">.\.venv\Scripts\python.exe -m pytest tests -q</code>
-      → <b>63 passed</b>.</p>
+      → <b>66 passed</b>.</p>
   </section>
 
   <p style="text-align:right"><a class="toplink" href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">↑ Başa dön</a></p>

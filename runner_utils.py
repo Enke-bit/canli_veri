@@ -75,39 +75,55 @@ def title(message: str) -> None:
     say(f"\n{C.BOLD}{line}\n  {message}\n{line}{C.RESET}\n")
 
 
-def ensure_venv() -> None:
-    """Betik global Python ile calistirildiysa sanal ortama gec.
+REQUIRED_MODULES = ("fastapi", "uvicorn", "sqlalchemy", "pyodbc", "httpx", "faker", "dotenv", "pytest")
 
-    Boylece kullanici '.venv\\Scripts\\activate' yapmayi unutsa bile
-    paketler bulunur. Sanal ortam yoksa anlasilir bir mesaj verir.
+
+def _missing_modules() -> list[str]:
+    import importlib.util
+
+    return [name for name in REQUIRED_MODULES if importlib.util.find_spec(name) is None]
+
+
+def ensure_venv() -> None:
+    """Projeyi her zaman .venv icindeki Python ile calistirir.
+
+    Kullanici 'python run.py' yazdiginda global Python'da tesadufen bazi
+    paketler kurulu olabilir; bu yuzden "import fastapi" kontrolu yeterli
+    degildir. Kural: .venv varsa ve su anki yorumlayici .venv degilse,
+    betik .venv ile yeniden baslatilir.
     """
     if os.getenv("MSSQLSYNC_NO_REEXEC") == "1":
         return
-
-    try:
-        import fastapi  # noqa: F401
-        return
-    except ImportError:
-        pass
 
     venv_python = ROOT / ".venv" / "Scripts" / "python.exe"
     if not venv_python.exists():
         venv_python = ROOT / ".venv" / "bin" / "python"  # Linux/macOS
 
-    if not venv_python.exists():
-        fail("Sanal ortam bulunamadi ve paketler kurulu degil.")
-        say("")
-        say("  Once su komutlari calistirin:")
-        say(f"    {C.BOLD}python -m venv .venv{C.RESET}")
-        say(f"    {C.BOLD}.venv\\Scripts\\python.exe -m pip install -r requirements.txt{C.RESET}")
-        say("")
-        raise SystemExit(1)
+    current = Path(sys.executable).resolve()
+    if venv_python.exists() and venv_python.resolve() != current:
+        env = os.environ.copy()
+        env["MSSQLSYNC_NO_REEXEC"] = "1"
+        result = subprocess.run(
+            [str(venv_python), str(Path(sys.argv[0]).resolve()), *sys.argv[1:]],
+            env=env,
+            cwd=str(ROOT),
+        )
+        raise SystemExit(result.returncode)
 
-    # Ayni betigi sanal ortamdaki Python ile yeniden baslat.
-    env = os.environ.copy()
-    env["MSSQLSYNC_NO_REEXEC"] = "1"
-    result = subprocess.run([str(venv_python), str(Path(sys.argv[0]).resolve()), *sys.argv[1:]], env=env)
-    raise SystemExit(result.returncode)
+    missing = _missing_modules()
+    if not missing:
+        return
+
+    fail("Gerekli paketler eksik: " + ", ".join(missing))
+    say("")
+    if not venv_python.exists():
+        say("  Sanal ortam yok. Once sunlari calistirin:")
+        say(f"    {C.BOLD}python -m venv .venv{C.RESET}")
+    else:
+        say("  Sanal ortamdaki paketler eksik. Kurun:")
+    say(f"    {C.BOLD}.venv\\Scripts\\python.exe -m pip install -r requirements.txt{C.RESET}")
+    say("")
+    raise SystemExit(1)
 
 
 def port_in_use(port: int, host: str = "127.0.0.1") -> bool:

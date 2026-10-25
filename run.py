@@ -40,6 +40,7 @@ PAGES = {
     "sema": ("/mimari", "Mimari ve canli veri akisi"),
     "kilavuz": ("/kilavuz", "Sifirdan calistirma kilavuzu"),
     "slayt": ("/slayt", "Sunum: canli veri cekme mimarisi"),
+    "senkron": ("/slayt-senkron", "Sunum: canli veri nasil cekilir (basit)"),
     "docs": ("/docs", "API dokumantasyonu (Swagger)"),
 }
 

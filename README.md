@@ -153,6 +153,7 @@ Her biri hedef API'yi gerekiyorsa kendisi başlatır, sayfayı açar, `Ctrl+C` i
 | `python run_sema.py` | <http://127.0.0.1:8000/mimari> — şemalı mimari |
 | `python run_sifir_kurulum.py` | <http://127.0.0.1:8000/kilavuz> — sıfırdan kurulum |
 | `python run_slayt.py` | <http://127.0.0.1:8000/slayt> — 14 slaytlık sunum |
+| `python run_slayt_senkron.py` | <http://127.0.0.1:8000/slayt-senkron> — 11 slayt, sade anlatım |
 
 Ortak seçenekler: `--port 8010`, `--no-browser`, `--url-only` (yalnızca adresi yazar), `--help`.
 
@@ -712,6 +713,7 @@ Aynı sunucuda iki dokümantasyon sayfası daha vardır (harici CDN yok, çevrim
 | `/kilavuz` | **Sıfırdan çalıştırma kılavuzu.** 15 bölüm; her komutun beklenen çıktısı, `.env` tablosu, SQL Server Express/LocalDB karşılaştırması, hata çözümleri, kopyala-yapıştır komut kartı. |
 | `/mimari` | **Mimari ve canlı veri akışı.** 6 SVG şema: uçtan uca akış, ER modeli, senkronizasyon sırası, checkpoint/örtüşme zaman çizelgesi, hata-retry kararı, aktarım/okuma ritmi. Tasarım kararlarının gerekçeleri ve ölçekleme yol haritası. |
 | `/slayt` | **Sunum (14 slayt).** Canlı veri çekme mimarisi: problem, büyük resim, artımlı çekme, örtüşme, upsert, checkpoint disiplini, retry, eşzamanlılık, zamanlama, gözlemlenebilirlik, ölçekleme. Ok tuşlarıyla gezinilir, `F` tam ekran, `P` ile yazdırma/PDF. |
+| `/slayt-senkron` | **Basit anlatım (11 slayt).** "Canlı veri nasıl çekilir?" sorusunu teknik olmayan dille yanıtlar: sorun, 4 kural (sadece değişeni iste · defter tut · geriden başla · varsa güncelle), bir turun 6 adımı, hata durumu, tek cümlelik özet. Sunum yaparken veya birine anlatırken kullanın. |
 
 Hedef API çalışmıyorsa tarayıcıda `http://127.0.0.1:8000/dashboard` açılmaz.
 Bu durumda en kısa yol:
@@ -744,6 +746,31 @@ python run_slayt.py
 
 Klavye: `→`/`←` gezinme, `F` tam ekran, `Home`/`End`, `P` yazdır/PDF.
 Slaytlar satır içi SVG kullanır; harici CDN yoktur, çevrimdışı çalışır.
+
+### Basit anlatım (11 slayt)
+
+Aynı konunun **teknik olmayan** anlatımı: <http://127.0.0.1:8000/slayt-senkron>
+
+```powershell
+python run_slayt_senkron.py
+```
+
+Birine "bu veri nasıl çekiliyor?" diye anlatırken kullanılır. Jargon yerine
+gündelik benzetmeler kullanır (defter tutmak, markete liste ile gitmek gibi).
+
+| Slayt | Konu |
+|---|---|
+| 1 | Kapak — "kaçırmadan al, tekrar yazma, aynı yerden devam et" |
+| 2 | Her şeyi çekmek neden olmaz? (yavaş · mükerrer · yarım kalma) |
+| 3 | **Bütün mesele 4 kural** |
+| 4 | Kural 1 — sadece değişeni iste (`updated_since`) |
+| 5 | Kural 2 — defter tut (`SyncState`), yalnızca iş bitince güncelle |
+| 6 | Kural 3 — sınırdaki kaydı kaçırmamak için 2 dk geriden başla |
+| 7 | Kural 4 — varsa güncelle, yoksa ekle (+ UNIQUE güvencesi) |
+| 8 | Bir tur nasıl geçiyor? 6 adım |
+| 9 | Sayılarla: ilk tur 2.000, sonraki turlar 3 kayıt |
+| 10 | Ters giderse: defter ilerlemez, sonraki tur toparlar |
+| 11 | Tek cümlelik özet |
 
 Panelin gösterdiği her sayı **MSSQL'den** gelir:
 

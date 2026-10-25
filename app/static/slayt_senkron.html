@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canlı Veri Nasıl Çekilir? · Basit Anlatım</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #141f33;
+    --border: #2a3a55;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --dim: #64748b;
+    --sky: #38bdf8;
+    --green: #34d399;
+    --amber: #fbbf24;
+    --rose: #fb7185;
+    --violet: #a78bfa;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--text); overflow: hidden;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  .slide {
+    position: absolute; inset: 0; display: none; flex-direction: column;
+    padding: 6vh 7vw 9vh; overflow-y: auto;
+  }
+  .slide.active { display: flex; }
+  .slide > * { flex-shrink: 0; }
+
+  .step-tag {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: .74rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--sky); margin-bottom: 1.4rem;
+  }
+  .step-tag::before { content: ""; width: 26px; height: 2px; background: var(--sky); border-radius: 2px; }
+
+  h1 { font-size: clamp(2.2rem, 5vw, 3.9rem); line-height: 1.05; margin: 0 0 1.2rem; letter-spacing: -.035em; }
+  h2 { font-size: clamp(1.7rem, 3.4vw, 2.7rem); line-height: 1.14; margin: 0 0 1rem; letter-spacing: -.025em; }
+  h3 { font-size: clamp(1rem, 1.4vw, 1.2rem); margin: 0 0 .5rem; }
+  p { font-size: clamp(.95rem, 1.35vw, 1.18rem); line-height: 1.62; color: #cbd5e1; margin: 0 0 .9rem; max-width: 64ch; }
+  .lead { font-size: clamp(1.05rem, 1.7vw, 1.4rem); color: #dbeafe; max-width: 58ch; line-height: 1.55; }
+  .dim { color: var(--muted); }
+  b, strong { color: #fff; }
+  .sky { color: var(--sky); } .green { color: var(--green); }
+  .amber { color: var(--amber); } .rose { color: var(--rose); }
+  code {
+    font-family: ui-monospace, Consolas, monospace; font-size: .86em;
+    background: #0a1526; border: 1px solid #23334d; border-radius: 5px;
+    padding: .12em .45em; color: #a5f3fc;
+  }
+
+  /* kapak */
+  .cover { justify-content: center; }
+  .cover .analogy {
+    margin-top: 2rem; display: flex; align-items: center; gap: 1rem;
+    font-size: clamp(.9rem, 1.2vw, 1.05rem); color: var(--muted);
+  }
+  .cover .analogy .dotline { flex: none; width: 60px; height: 2px; background: #2a3a55; }
+
+  /* kart izgarasi */
+  .grid { display: grid; gap: 1rem; margin: 1.4rem 0 .4rem; }
+  .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.15rem 1.3rem;
+  }
+  .card .n {
+    width: 26px; height: 26px; border-radius: 8px; display: inline-flex;
+    align-items: center; justify-content: center; font-size: .8rem; font-weight: 700;
+    background: rgba(56,189,248,.14); color: var(--sky); border: 1px solid rgba(56,189,248,.35);
+    margin-bottom: .6rem;
+  }
+  .card h3 { font-size: clamp(.95rem, 1.2vw, 1.08rem); }
+  .card p { font-size: clamp(.82rem, 1.02vw, .93rem); margin: .3rem 0 0; color: var(--muted); line-height: 1.5; max-width: none; }
+  .card.bad { border-color: #6b2233; background: rgba(251,113,133,.06); }
+  .card.bad .n { background: rgba(251,113,133,.14); color: var(--rose); border-color: rgba(251,113,133,.35); }
+  .card.good { border-color: #1d6b56; background: rgba(52,211,153,.06); }
+  .card.good .n { background: rgba(52,211,153,.14); color: var(--green); border-color: rgba(52,211,153,.35); }
+
+  /* büyük rakam */
+  .big { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1; letter-spacing: -.03em; }
+  .big-sub { font-size: .8rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--dim); margin-bottom: .4rem; }
+
+  /* alıntı / not */
+  .quote {
+    border-left: 3px solid var(--amber); background: rgba(251,191,36,.07);
+    padding: .9rem 1.1rem; border-radius: 0 9px 9px 0; font-size: clamp(.88rem, 1.1vw, 1rem);
+    color: #fde68a; margin: 1.2rem 0 0; max-width: 70ch;
+  }
+  .note {
+    border: 1px solid #24506b; background: rgba(56,189,248,.08);
+    padding: .9rem 1.1rem; border-radius: 10px;
+    font-size: clamp(.88rem, 1.1vw, 1rem); color: #bae6fd; margin: 1.1rem 0 0; max-width: 70ch;
+  }
+  .note.ok { border-color: #1d6b56; background: rgba(52,211,153,.08); color: #bbf7d0; }
+  .note.no { border-color: #6b2233; background: rgba(251,113,133,.08); color: #fecdd3; }
+
+  ul, ol { margin: .3rem 0 .4rem; padding-left: 1.25rem; }
+  li { font-size: clamp(.88rem, 1.15vw, 1.05rem); line-height: 1.65; color: #cbd5e1; margin: .4rem 0; }
+  li::marker { color: var(--sky); }
+  .big-list li { margin: .75rem 0; }
+
+  /* görsel kutu */
+  .viz {
+    background: #08101d; border: 1px solid #1d2b42; border-radius: 14px;
+    padding: 1.1rem 1rem .7rem; margin: 1.2rem 0 0;
+  }
+  .viz svg { width: 100%; height: auto; display: block; }
+  .viz .cap { font-size: .76rem; color: var(--dim); text-align: center; margin: .5rem 0 .2rem; }
+
+  /* 6 adım akışı */
+  .flow { display: flex; flex-direction: column; gap: .55rem; margin: 1.3rem 0 0; }
+  .flow-row {
+    display: grid; grid-template-columns: 34px 1fr; gap: .9rem; align-items: start;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: .7rem .95rem;
+  }
+  .flow-row .idx {
+    width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: .78rem; font-weight: 700;
+    background: rgba(56,189,248,.12); color: var(--sky); border: 1px solid rgba(56,189,248,.3);
+  }
+  .flow-row .body { font-size: clamp(.86rem, 1.1vw, .98rem); color: #cbd5e1; line-height: 1.5; }
+  .flow-row .body b { display: block; color: #fff; margin-bottom: .12rem; }
+  .flow-row .body span { color: var(--muted); }
+
+  /* hata / başarı iki kolon */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-top: 1.2rem; }
+
+  /* özet kutusu */
+  .recap {
+    border: 2px solid rgba(56,189,248,.35); background: rgba(56,189,248,.06);
+    border-radius: 16px; padding: 1.5rem 1.7rem; margin-top: 1.4rem; max-width: 74ch;
+  }
+  .recap .one { font-size: clamp(1.05rem, 1.7vw, 1.4rem); line-height: 1.55; color: #e0f2fe; }
+  .recap .one b { color: #fff; }
+
+  /* ilerleme + alt bar */
+  .progress { position: fixed; left: 0; top: 0; height: 3px; background: var(--sky); z-index: 10; transition: width .22s ease; }
+  .hud {
+    position: fixed; left: 0; right: 0; bottom: 0; height: 46px; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.8rem; font-size: .72rem; color: var(--dim);
+    background: linear-gradient(to top, rgba(11,18,32,.97), rgba(11,18,32,0));
+    pointer-events: none;
+  }
+  .hud b { color: var(--muted); }
+  .hud .counter { font-variant-numeric: tabular-nums; }
+  .help {
+    position: fixed; right: 1.5rem; top: 1.2rem; z-index: 6;
+    font-size: .68rem; color: var(--dim); line-height: 1.75;
+    background: rgba(20,31,51,.92); border: 1px solid #22314a; border-radius: 8px;
+    padding: .45rem .7rem;
+  }
+  .help kbd {
+    font-family: inherit; background: #0b1524; border: 1px solid #2a3a55;
+    border-radius: 4px; padding: .05rem .34rem; color: var(--muted);
+  }
+  .dots { display: flex; gap: 5px; }
+  .dots i { width: 5px; height: 5px; border-radius: 50%; background: #334155; }
+  .dots i.on { background: var(--sky); }
+
+  @media (max-width: 900px) {
+    .help { display: none; }
+    .g3, .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .slide { padding: 5vh 6vw 10vh; }
+  }
+  @media (max-width: 620px) {
+    .g2, .g3, .g4 { grid-template-columns: 1fr; }
+    .split { grid-template-columns: 1fr; }
+    .slide { padding: 4.5vh 5.5vw 11vh; }
+    .hud { font-size: .64rem; padding: 0 1rem; }
+    .viz { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .viz svg { min-width: 600px; }
+  }
+
+  @media print {
+    @page { size: landscape; margin: 0; }
+    body { overflow: visible; background: #fff; }
+    .stage { position: static; }
+    .slide {
+      display: flex !important; position: relative; height: 100vh;
+      page-break-after: always; break-after: page; background: #fff; color: #111;
+      padding: 5vh 5vw;
+    }
+    .hud, .progress, .help { display: none; }
+    h1, h2, h3, b, strong, .recap .one { color: #111 !important; }
+    p, li, .card p, .flow-row .body { color: #333 !important; }
+    .card, .viz, .note, .quote, .flow-row, .recap { background: #f7f7f7 !important; border-color: #bbb !important; }
+    .dim, .big-sub { color: #666 !important; }
+    code { background: #eee !important; color: #111 !important; border-color: #ccc !important; }
+    svg text { fill: #111 !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="help">
+  <kbd>→</kbd> ileri · <kbd>←</kbd> geri<br>
+  <kbd>F</kbd> tam ekran · <kbd>P</kbd> yazdır
+</div>
+
+<div class="stage" id="stage">
+
+  <!-- 1 -->
+  <section class="slide cover active">
+    <div class="step-tag">Basit anlatım · 11 slayt</div>
+    <h1>Canlı veri<br>nasıl çekilir?</h1>
+    <p class="lead">
+      Bir sistemdeki veri sürekli değişiyor. Biz onu kendi veritabanımıza
+      düzenli olarak almak istiyoruz — <b>hiçbir kaydı kaçırmadan</b> ve
+      <b>aynı kaydı iki kez yazmadan</b>.
+    </p>
+    <div class="analogy">
+      <span>Kısaca:</span>
+      <span class="dotline"></span>
+      <span>Kaçırmadan al · tekrar yazma · hep aynı yerden devam et</span>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="step-tag">1 · Sorun</div>
+    <h2>Her seferinde her şeyi çekmek neden olmaz?</h2>
+    <p>İlk akla gelen yol şudur: “Bağlan, tüm listeyi al, veritabanına yaz.” 200 kayıtta çalışır. 200.000 kayıtta çalışmaz.</p>
+    <div class="grid g3">
+      <div class="card bad">
+        <div class="n">1</div>
+        <h3>Yavaş ve gereksiz</h3>
+        <p>Her turda aynı 200.000 kaydı indirmek. Değişen sadece 3 kayıt olsa bile.</p>
+      </div>
+      <div class="card bad">
+        <div class="n">2</div>
+        <h3>Mükerrer kayıt</h3>
+        <p>Aynı kaydı ikinci kez eklemek. Listede iki tane aynı hasta görünür.</p>
+      </div>
+      <div class="card bad">
+        <div class="n">3</div>
+        <h3>Yarım kalma</h3>
+        <p>Ortada bağlantı koparsa yarısı yazılmış, yarısı yazılmamış veri kalır.</p>
+      </div>
+    </div>
+    <div class="quote">
+      Asıl tehlike hata almak değil: yarıda kalan işi <b>“tamam” sanmak.</b> Sonra kimse fark etmez.
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="step-tag">2 · Çözümün tamamı</div>
+    <h2>Bütün mesele 4 kural</h2>
+    <p>Bu projede canlı veri çekme işi aslında dört basit kurala indirgenmiş. Gerisi bu kuralların etrafındaki güvenlik.</p>
+    <div class="grid g4">
+      <div class="card">
+        <div class="n">1</div>
+        <h3>Sadece değişeni iste</h3>
+        <p>“Bana son 10:00’dan sonra değişenleri ver.”</p>
+      </div>
+      <div class="card">
+        <div class="n">2</div>
+        <h3>Defter tut</h3>
+        <p>“En son nereye kadar aldım?” bilgisini sakla.</p>
+      </div>
+      <div class="card">
+        <div class="n">3</div>
+        <h3>Sınırı geriden al</h3>
+        <p>Tam sınırdaki kaydı kaçırmamak için 2 dk geriden başla.</p>
+      </div>
+      <div class="card">
+        <div class="n">4</div>
+        <h3>Aynı kayıt tek satır</h3>
+        <p>Varsa güncelle, yoksa ekle. İki kez gelse de tek satır.</p>
+      </div>
+    </div>
+    <div class="note">
+      Dördü birlikte çalışır. Biri eksik olursa ya veri kaçar ya da mükerrer kayıt oluşur.
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="step-tag">Kural 1</div>
+    <h2>“Bana sadece değişenleri ver”</h2>
+    <p>Kaynak sistem her kaydın <b>son değişiklik saatini</b> tutar. Biz de isteğe şu bilgiyi ekleriz:</p>
+    <div class="viz" style="padding:1rem">
+      <code style="font-size:clamp(.8rem,1.2vw,1rem)">GET /source/appointments?updated_since=2026-10-24T10:00:00Z</code>
+    </div>
+    <div class="split">
+      <div class="card good">
+        <div class="n">✓</div>
+        <h3>Yanıt: sadece 3 kayıt</h3>
+        <p>10:00’dan sonra değişenler. Geri kalan 1.997 kayıt hiç indirilmez.</p>
+      </div>
+      <div class="card">
+        <div class="n">i</div>
+        <h3>Benzetme</h3>
+        <p>Markete her seferinde tüm reyonları gezmek yerine, elindeki listeyi almak gibi.</p>
+      </div>
+    </div>
+    <div class="note ok">Veri büyüse de tur başına iş <b>değişen kayıt sayısı kadar</b> kalır.</div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="step-tag">Kural 2</div>
+    <h2>“En son nereye kadar aldım?” — defter</h2>
+    <p>Bir sonraki turda hangi tarihten devam edeceğimizi bir yerde saklamalıyız. Bu projede bu bilgi
+      <code>SyncState</code> tablosunda durur.</p>
+    <div class="grid g2">
+      <div class="card">
+        <div class="n">1</div>
+        <h3>Tur başında oku</h3>
+        <p>“Son başarılı aktarım: 10:00” → bu tur 10:00’dan itibaren iste.</p>
+      </div>
+      <div class="card">
+        <div class="n">2</div>
+        <h3>Tur bitince yaz</h3>
+        <p>Tüm sayfalar başarıyla yazıldıysa defteri güncelle.</p>
+      </div>
+    </div>
+    <div class="note no">
+      <b>Önemli:</b> Defter yalnızca iş <b>tamamen</b> bitince güncellenir.
+      Yarıda güncellenirse, atlanan sayfa bir daha istenmez.
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="step-tag">Kural 3</div>
+    <h2>Sınırdaki kaydı kaçırmamak için: 2 dakika geriden</h2>
+    <p>“10:00’dan sonra” dersek, tam 10:00:00’da güncellenen kayıt iki turun arasına düşebilir.
+      Bu yüzden defterin saatinden <b>120 saniye geriden</b> başlarız.</p>
+    <div class="viz">
+      <svg viewBox="0 0 900 230" role="img" aria-label="Örtüşme penceresi">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+          </marker>
+        </defs>
+        <g font-family="system-ui, Segoe UI, sans-serif">
+          <line x1="55" y1="100" x2="860" y2="100" stroke="#475569" stroke-width="2" marker-end="url(#ar)"/>
+
+          <g font-size="11" fill="#64748b" text-anchor="middle">
+            <text x="170" y="126">09:55</text>
+            <text x="330" y="126">09:58</text>
+            <text x="490" y="126" fill="#fbbf24" font-weight="700">10:00</text>
+            <text x="650" y="126">10:02</text>
+          </g>
+
+          <rect x="330" y="78" width="160" height="16" rx="4" fill="#fbbf24" opacity=".22" stroke="#fbbf24" stroke-dasharray="3 2"/>
+          <text x="410" y="68" text-anchor="middle" font-size="11" fill="#fbbf24">2 dakika geriden</text>
+
+          <line x1="490" y1="42" x2="490" y2="140" stroke="#fbbf24" stroke-width="1.6" stroke-dasharray="4 3"/>
+          <text x="490" y="34" text-anchor="middle" font-size="11" font-weight="700" fill="#fbbf24">defter: 10:00</text>
+
+          <circle cx="410" cy="100" r="7" fill="#34d399"/>
+          <circle cx="600" cy="100" r="7" fill="#34d399"/>
+          <circle cx="740" cy="100" r="7" fill="#34d399"/>
+
+          <path d="M 410 108 L 410 152" stroke="#1d6b56" stroke-width="1" stroke-dasharray="2 3"/>
+          <rect x="300" y="152" width="220" height="42" rx="8" fill="#0e2f27" stroke="#34d399"/>
+          <text x="410" y="170" text-anchor="middle" font-size="10.5" font-weight="600" fill="#6ee7b7">09:58'den başladık</text>
+          <text x="410" y="185" text-anchor="middle" font-size="10" fill="#94a3b8">10:00 sınır kaydı da yakalandı</text>
+
+          <rect x="560" y="152" width="290" height="42" rx="8" fill="#0e7490" opacity=".22" stroke="#38bdf8"/>
+          <text x="705" y="170" text-anchor="middle" font-size="10.5" font-weight="600" fill="#7dd3fc">bu tur istenen aralık</text>
+          <text x="705" y="185" text-anchor="middle" font-size="10" fill="#94a3b8">09:58 → şimdi</text>
+
+          <text x="450" y="215" text-anchor="middle" font-size="10" fill="#64748b">Aynı kaydı bir kez daha işlemek zararsızdır; kaçırmak zararlıdır.</text>
+        </g>
+      </svg>
+      <div class="cap">Defterin saatinden 2 dakika geriden başlamak sınır kaydını garantiye alır.</div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="step-tag">Kural 4</div>
+    <h2>“Varsa güncelle, yoksa ekle”</h2>
+    <p>Aynı kayıt iki kez gelirse ne olacak? Kaydı <b>dış kimliğiyle</b> ararız:
+      <code>APT-000001</code> gibi. Varsa alanlarını güncelleriz, yoksa yeni satır ekleriz.</p>
+    <div class="split">
+      <div class="card good">
+        <div class="n">1</div>
+        <h3>Ara</h3>
+        <p>“Bu kimlik bende var mı?” Tek sorguda sayfanın tamamına bakar.</p>
+      </div>
+      <div class="card good">
+        <div class="n">2</div>
+        <h3>Karar ver</h3>
+        <p>Yoksa <b>ekle</b>. Varsa ve bir şey değişmişse <b>güncelle</b>. Değişmemişse hiç dokunma.</p>
+      </div>
+    </div>
+    <div class="note ok">
+      Ek güvence: veritabanında bu kimlik <b>tekil (UNIQUE)</b>. Kod hata yapsa bile ikinci satırı MSSQL reddeder.
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="step-tag">5 · Bir tur nasıl geçiyor?</div>
+    <h2>Adım adım: 6 adım</h2>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="idx">1</div>
+        <div class="body"><b>Deftere bak.</b> <span>“En son 10:00’a kadar almıştım.”</span></div>
+      </div>
+      <div class="flow-row">
+        <div class="idx">2</div>
+        <div class="body"><b>İste.</b> <span>updated_since = 09:58 (2 dk geriden) · 200’lük sayfalar hâlinde.</span></div>
+      </div>
+      <div class="flow-row">
+        <div class="idx">3</div>
+        <div class="body"><b>Kontrol et.</b> <span>Cevap beklenen biçimde mi? Tarihler, kimlikler, durumlar geçerli mi?</span></div>
+      </div>
+      <div class="flow-row">
+        <div class="idx">4</div>
+        <div class="body"><b>Yaz.</b> <span>Her sayfa tek işlemde: varsa güncelle, yoksa ekle. Hata olursa o sayfa geri alınır.</span></div>
+      </div>
+      <div class="flow-row">
+        <div class="idx">5</div>
+        <div class="body"><b>Devam et.</b> <span>Başka sayfa var mı? Varsa 2. adıma dön.</span></div>
+      </div>
+      <div class="flow-row">
+        <div class="idx">6</div>
+        <div class="body"><b>Bitir.</b> <span>Tüm sayfalar bittiyse defteri güncelle ve “başarılı” diye kaydet.</span></div>
+      </div>
+    </div>
+    <p class="dim" style="font-size:.82rem;margin-top:1rem">
+      Bu sıra her 5 dakikada bir otomatik tekrarlanır. Kod: <code>app/sync_engine.py</code>.
+    </p>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <div class="step-tag">6 · Sayılarla</div>
+    <h2>Peki bu ne kazandırıyor?</h2>
+    <div class="grid g3" style="margin-top:1rem">
+      <div class="card">
+        <div class="big-sub">ilk tur</div>
+        <div class="big sky">2.000</div>
+        <p>Her şey ilk kez alınır. Bir defaya mahsus.</p>
+      </div>
+      <div class="card">
+        <div class="big-sub">sonraki turlar</div>
+        <div class="big green">3</div>
+        <p>Yalnızca değişenler. Geri kalanı hiç indirilmez.</p>
+      </div>
+      <div class="card">
+        <div class="big-sub">mükerrer kayıt</div>
+        <div class="big green">0</div>
+        <p>Defter + upsert + tekil indeks birlikte garanti eder.</p>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:.86rem;margin-top:1.3rem">
+      <tr>
+        <th style="text-align:left;padding:.5rem .6rem;border-bottom:1px solid #22314a;color:#94a3b8;font-size:.68rem;text-transform:uppercase;letter-spacing:.8px">Yaklaşım</th>
+        <th style="text-align:left;padding:.5rem .6rem;border-bottom:1px solid #22314a;color:#94a3b8;font-size:.68rem;text-transform:uppercase;letter-spacing:.8px">Tur başına iş</th>
+        <th style="text-align:left;padding:.5rem .6rem;border-bottom:1px solid #22314a;color:#94a3b8;font-size:.68rem;text-transform:uppercase;letter-spacing:.8px">Risk</th>
+      </tr>
+      <tr>
+        <td style="padding:.5rem .6rem;border-bottom:1px solid #22314a;color:#fecdd3">Her şeyi çek</td>
+        <td style="padding:.5rem .6rem;border-bottom:1px solid #22314a">2.000 kayıt</td>
+        <td style="padding:.5rem .6rem;border-bottom:1px solid #22314a">Yavaş · mükerrer</td>
+      </tr>
+      <tr>
+        <td style="padding:.5rem .6rem;border-bottom:1px solid #22314a;color:#6ee7b7">Sadece değişeni çek</td>
+        <td style="padding:.5rem .6rem;border-bottom:1px solid #22314a">3 kayıt</td>
+        <td style="padding:.5rem .6rem;border-bottom:1px solid #22314a">Yok (sınır + defter korumalı)</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <div class="step-tag">7 · Ters giderse</div>
+    <h2>Bir şeyler bozulursa ne olur?</h2>
+    <div class="grid g2" style="margin-top:1rem">
+      <div class="card bad">
+        <div class="n">!</div>
+        <h3>Geçici sorun</h3>
+        <p>İnternet koptu, sunucu 500 döndü, cevap gecikti. <b>Birkaç kez tekrar dener</b>, sonra vazgeçer.</p>
+      </div>
+      <div class="card bad">
+        <div class="n">!</div>
+        <h3>Kalıcı sorun</h3>
+        <p>Veri bozuk geldi, hasta kaydı yok. Tekrar denemek aynı hatayı verir; <b>denemez</b>, kaydeder ve durur.</p>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:1rem">
+      <div class="card">
+        <div class="n">1</div>
+        <h3>Defter ilerlemez</h3>
+        <p>Başarısız turda “en son nereye kadar” bilgisi <b>değişmez</b>.</p>
+      </div>
+      <div class="card">
+        <div class="n">2</div>
+        <h3>Kayıt: “başarısız”</h3>
+        <p>Tur başarılı gibi gösterilmez. Panelde ve logda görünür.</p>
+      </div>
+      <div class="card">
+        <div class="n">3</div>
+        <h3>Sonraki tur toparlar</h3>
+        <p>Sorun geçince aynı veri yeniden istenir; upsert sayesinde zararsız.</p>
+      </div>
+    </div>
+    <div class="note ok">Kural: <b>hata görünür olmalı.</b> Sessizce atlanan veri, en tehlikeli hatadır.</div>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide">
+    <div class="step-tag">Özet</div>
+    <h2>Tek cümleyle</h2>
+    <div class="recap">
+      <div class="one">
+        “Bana <b>defterimdeki saatten 2 dakika geriden</b> itibaren <b>sadece değişenleri</b> ver.
+        Geleni <b>varsa güncelle, yoksa ekle</b>. Hepsi bittiyse defteri ilerlet.”
+      </div>
+    </div>
+    <div class="grid g4" style="margin-top:1.6rem">
+      <div class="card tight" style="padding:.85rem 1rem">
+        <div class="n">1</div><h3 style="font-size:.95rem">Değişeni iste</h3>
+      </div>
+      <div class="card tight" style="padding:.85rem 1rem">
+        <div class="n">2</div><h3 style="font-size:.95rem">Defter tut</h3>
+      </div>
+      <div class="card tight" style="padding:.85rem 1rem">
+        <div class="n">3</div><h3 style="font-size:.95rem">Geriden başla</h3>
+      </div>
+      <div class="card tight" style="padding:.85rem 1rem">
+        <div class="n">4</div><h3 style="font-size:.95rem">Varsa güncelle</h3>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:1.4rem">
+      <div class="card tight" style="padding:.9rem 1.1rem">
+        <h3 style="font-size:.92rem;margin:0 0 .3rem">Canlı izlemek için</h3>
+        <p style="font-size:.88rem"><code>python run_panel.py</code></p>
+      </div>
+      <div class="card tight" style="padding:.9rem 1.1rem">
+        <h3 style="font-size:.92rem;margin:0 0 .3rem">Ayrıntılı şemalar</h3>
+        <p style="font-size:.88rem"><code>python run_sema.py</code></p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="hud">
+  <span><b>DentSync</b> · Canlı veri nasıl çekilir?</span>
+  <span style="display:flex;align-items:center;gap:14px">
+    <a href="/slayt" style="color:#64748b;text-decoration:none">Ayrıntılı sunum →</a>
+    <span class="dots" id="dots"></span>
+    <span class="counter"><span id="cur">1</span> / <span id="total">11</span></span>
+  </span>
+</div>
+
+<script>
+  "use strict";
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const progress = document.getElementById("progress");
+  const curEl = document.getElementById("cur");
+  const dotsEl = document.getElementById("dots");
+  document.getElementById("total").textContent = slides.length;
+
+  let index = 0;
+
+  slides.forEach(() => {
+    const dot = document.createElement("i");
+    dotsEl.appendChild(dot);
+  });
+  const dots = Array.from(dotsEl.children);
+
+  function show(next) {
+    index = Math.max(0, Math.min(slides.length - 1, next));
+    slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+    dots.forEach((dot, i) => dot.classList.toggle("on", i === index));
+    progress.style.width = ((index + 1) / slides.length * 100) + "%";
+    curEl.textContent = index + 1;
+    history.replaceState(null, "", "#" + (index + 1));
+    slides[index].scrollTop = 0;
+  }
+
+  function next() { if (index < slides.length - 1) show(index + 1); }
+  function prev() { if (index > 0) show(index - 1); }
+
+  document.addEventListener("keydown", (event) => {
+    const key = event.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(key)) {
+      event.preventDefault(); next();
+    } else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(key)) {
+      event.preventDefault(); prev();
+    } else if (key === "Home") {
+      event.preventDefault(); show(0);
+    } else if (key === "End") {
+      event.preventDefault(); show(slides.length - 1);
+    } else if (key === "f" || key === "F") {
+      event.preventDefault();
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen?.();
+    } else if (key === "p" || key === "P") {
+      window.print();
+    }
+  });
+
+  let touchX = null;
+  document.addEventListener("touchstart", (e) => { touchX = e.changedTouches[0].clientX; }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 55) { dx < 0 ? next() : prev(); }
+    touchX = null;
+  }, { passive: true });
+
+  const fromHash = parseInt(location.hash.replace("#", ""), 10);
+  show(Number.isFinite(fromHash) && fromHash > 0 ? fromHash - 1 : 0);
+
+  window.addEventListener("hashchange", () => {
+    const target = parseInt(location.hash.replace("#", ""), 10);
+    if (Number.isFinite(target) && target > 0 && target - 1 !== index) show(target - 1);
+  });
+</script>
+</body>
+</html>

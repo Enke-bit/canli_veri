@@ -369,8 +369,27 @@ def test_slides_page_is_served(api):
     assert "cdnjs" not in body
 
 
+def test_sync_slides_page_is_served(api):
+    """Basit anlatim sunumu: 4 kural ve 11 slayt."""
+    response = api.get("/slayt-senkron")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    body = response.text
+    assert "Canlı veri" in body
+    assert body.count('class="slide') >= 11
+    # Dort kural ve temel kavramlar anlatilmali.
+    for phrase in ("Sadece değişeni", "Defter", "geriden", "Varsa güncelle"):
+        assert phrase in body, f"eksik: {phrase}"
+    # Sade anlatim: kod orani dusuk, jargon aciklanmis.
+    assert "updated_since" in body
+    assert "SyncState" in body
+    # Harici kaynak yok.
+    assert "cdn." not in body
+    assert "cdnjs" not in body
+
+
 def test_all_static_pages_have_no_external_resources(api):
-    for path in ("/dashboard", "/kilavuz", "/mimari", "/slayt"):
+    for path in ("/dashboard", "/kilavuz", "/mimari", "/slayt", "/slayt-senkron"):
         body = api.get(path).text
         for marker in ("http://cdn", "https://cdn", "cdnjs", "unpkg.com"):
             assert marker not in body, f"{path} harici kaynak kullaniyor: {marker}"

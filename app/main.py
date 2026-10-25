@@ -25,6 +25,7 @@ DASHBOARD_FILE = PROJECT_ROOT / "app" / "static" / "dashboard.html"
 GUIDE_FILE = PROJECT_ROOT / "app" / "static" / "kilavuz.html"
 ARCHITECTURE_FILE = PROJECT_ROOT / "app" / "static" / "mimari.html"
 SLIDES_FILE = PROJECT_ROOT / "app" / "static" / "slayt.html"
+SYNC_SLIDES_FILE = PROJECT_ROOT / "app" / "static" / "slayt_senkron.html"
 
 app = FastAPI(
     title="DentSync Hedef API",
@@ -106,6 +107,12 @@ def slides() -> FileResponse:
     return _static_page(SLIDES_FILE, "app/static/slayt.html")
 
 
+@app.get("/slayt-senkron", include_in_schema=False)
+def sync_slides() -> FileResponse:
+    """Basit anlatim: canli veri nasil cekilir (4 kural)."""
+    return _static_page(SYNC_SLIDES_FILE, "app/static/slayt_senkron.html")
+
+
 def _static_page(path: Path, relative_name: str) -> FileResponse:
     if not path.exists():
         return JSONResponse(
@@ -124,6 +131,7 @@ def root() -> dict[str, str]:
         "guide": "/kilavuz",
         "architecture": "/mimari",
         "slides": "/slayt",
+        "sync_slides": "/slayt-senkron",
         "health": "/health",
-        "version": "1.3.0",
+        "version": "1.4.0",
     }

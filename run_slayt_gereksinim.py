@@ -18,7 +18,7 @@ import runner_utils as ru
 PAGE = "/slayt-gereksinim"
 LABEL = "Sunum: canli veri icin gereken sistemler"
 NOTES = [
-    "12 slayt: 5 katman, 11 gereksinim, kabul kriterleri ve fazlar.",
+    "12 slayt: 5 katman, kaynak sozlesmesi, yontem secimi, kabul kriterleri, fazlar.",
     "Her gereksinim projede hangi dosyayla karsilaniyor, tabloda gosterilir.",
 ]
 

@@ -41,6 +41,7 @@ PAGES = {
     "kilavuz": ("/kilavuz", "Sifirdan calistirma kilavuzu"),
     "slayt": ("/slayt", "Sunum: canli veri cekme mimarisi"),
     "senkron": ("/slayt-senkron", "Sunum: canli veri nasil cekilir (basit)"),
+    "gereksinim": ("/slayt-gereksinim", "Sunum: canli veri icin gereken sistemler"),
     "docs": ("/docs", "API dokumantasyonu (Swagger)"),
 }
 

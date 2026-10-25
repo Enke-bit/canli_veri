@@ -389,10 +389,68 @@ def test_sync_slides_page_is_served(api):
 
 
 def test_all_static_pages_have_no_external_resources(api):
-    for path in ("/dashboard", "/kilavuz", "/mimari", "/slayt", "/slayt-senkron"):
+    for path in (
+        "/dashboard",
+        "/kilavuz",
+        "/mimari",
+        "/slayt",
+        "/slayt-senkron",
+        "/slayt-gereksinim",
+    ):
         body = api.get(path).text
         for marker in ("http://cdn", "https://cdn", "cdnjs", "unpkg.com"):
             assert marker not in body, f"{path} harici kaynak kullaniyor: {marker}"
+
+
+def test_static_pages_have_valid_turkish_labels(api):
+    """Regresyon: PowerShell/here-string duzenlemeleri Turkce karakteri '?' yapmisti.
+
+    URL sorgu dizilerindeki '?' mesrudur; yalnizca kelime ICINDEKI '?' aranir.
+    """
+    import re
+
+    # Kelime icinde '?' : harf + '?' + harf  (or. "anlat?m")
+    broken = re.compile(r"[A-Za-zÇĞİÖŞÜçğıöşü]\?[A-Za-zÇĞİÖŞÜçğıöşü]")
+    # Elenen mesru kaliplar: URL parametreleri
+    allowed = ("appointment?limit", "appointments?limit", "summary?months", "appointments?updated")
+
+    for path in (
+        "/dashboard",
+        "/kilavuz",
+        "/mimari",
+        "/slayt",
+        "/slayt-senkron",
+        "/slayt-gereksinim",
+    ):
+        body = api.get(path).text
+        for match in broken.finditer(body):
+            snippet = body[max(0, match.start() - 12) : match.end() + 12]
+            cleaned = snippet
+            for ok in allowed:
+                cleaned = cleaned.replace(ok, "")
+            assert "?" not in cleaned.replace("?limit=1", ""), (
+                f"{path}: bozuk Turkce karakter olabilir -> {snippet!r}"
+            )
+
+
+def test_requirement_slides_page_is_served(api):
+    """Gereksinim sunumu: 5 katman, kritik yapilar ve kabul kriterleri."""
+    response = api.get("/slayt-gereksinim")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    body = response.text
+    assert "Canlı veri çekmek" in body
+    assert body.count('class="slide') >= 12
+    # Bes katman ve temel gereksinimler anlatilmali.
+    for phrase in ("Altyapı", "Kaynak", "Veritabanı", "Senkronizasyon", "Güvenlik", "Operasyon"):
+        assert phrase in body, f"eksik katman: {phrase}"
+    # Somut gereksinimler
+    for phrase in ("updated_since", "Benzersiz dış kimlik", "Foreign key", "SyncState", "SyncLog"):
+        assert phrase in body, f"eksik gereksinim: {phrase}"
+    # Kabul kriterleri ve fazlar
+    assert "pytest" in body
+    assert "Faz" in body
+    assert "cdn." not in body
 
 
 def test_pages_link_to_each_other(api):

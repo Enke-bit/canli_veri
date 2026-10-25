@@ -26,6 +26,7 @@ GUIDE_FILE = PROJECT_ROOT / "app" / "static" / "kilavuz.html"
 ARCHITECTURE_FILE = PROJECT_ROOT / "app" / "static" / "mimari.html"
 SLIDES_FILE = PROJECT_ROOT / "app" / "static" / "slayt.html"
 SYNC_SLIDES_FILE = PROJECT_ROOT / "app" / "static" / "slayt_senkron.html"
+REQUIREMENTS_SLIDES_FILE = PROJECT_ROOT / "app" / "static" / "slayt_gereksinim.html"
 
 app = FastAPI(
     title="DentSync Hedef API",
@@ -113,6 +114,12 @@ def sync_slides() -> FileResponse:
     return _static_page(SYNC_SLIDES_FILE, "app/static/slayt_senkron.html")
 
 
+@app.get("/slayt-gereksinim", include_in_schema=False)
+def requirement_slides() -> FileResponse:
+    """Gereksinim analizi: canli veri icin gereken sistemler ve yontemler."""
+    return _static_page(REQUIREMENTS_SLIDES_FILE, "app/static/slayt_gereksinim.html")
+
+
 def _static_page(path: Path, relative_name: str) -> FileResponse:
     if not path.exists():
         return JSONResponse(
@@ -132,6 +139,7 @@ def root() -> dict[str, str]:
         "architecture": "/mimari",
         "slides": "/slayt",
         "sync_slides": "/slayt-senkron",
+        "requirements_slides": "/slayt-gereksinim",
         "health": "/health",
-        "version": "1.4.0",
+        "version": "1.5.0",
     }

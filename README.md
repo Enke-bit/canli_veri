@@ -154,6 +154,7 @@ Her biri hedef API'yi gerekiyorsa kendisi başlatır, sayfayı açar, `Ctrl+C` i
 | `python run_sifir_kurulum.py` | <http://127.0.0.1:8000/kilavuz> — sıfırdan kurulum |
 | `python run_slayt.py` | <http://127.0.0.1:8000/slayt> — 14 slaytlık sunum |
 | `python run_slayt_senkron.py` | <http://127.0.0.1:8000/slayt-senkron> — 11 slayt, sade anlatım |
+| `python run_slayt_gereksinim.py` | <http://127.0.0.1:8000/slayt-gereksinim> — 12 slayt, gereksinim analizi |
 
 Ortak seçenekler: `--port 8010`, `--no-browser`, `--url-only` (yalnızca adresi yazar), `--help`.
 
@@ -714,6 +715,7 @@ Aynı sunucuda iki dokümantasyon sayfası daha vardır (harici CDN yok, çevrim
 | `/mimari` | **Mimari ve canlı veri akışı.** 6 SVG şema: uçtan uca akış, ER modeli, senkronizasyon sırası, checkpoint/örtüşme zaman çizelgesi, hata-retry kararı, aktarım/okuma ritmi. Tasarım kararlarının gerekçeleri ve ölçekleme yol haritası. |
 | `/slayt` | **Sunum (14 slayt).** Canlı veri çekme mimarisi: problem, büyük resim, artımlı çekme, örtüşme, upsert, checkpoint disiplini, retry, eşzamanlılık, zamanlama, gözlemlenebilirlik, ölçekleme. Ok tuşlarıyla gezinilir, `F` tam ekran, `P` ile yazdırma/PDF. |
 | `/slayt-senkron` | **Basit anlatım (11 slayt).** "Canlı veri nasıl çekilir?" sorusunu teknik olmayan dille yanıtlar: sorun, 4 kural (sadece değişeni iste · defter tut · geriden başla · varsa güncelle), bir turun 6 adımı, hata durumu, tek cümlelik özet. Sunum yaparken veya birine anlatırken kullanın. |
+| `/slayt-gereksinim` | **Gereksinim analizi (12 slayt).** Canlı veri çekmek için gereken **sistemler ve uygulanma yöntemleri**: 5 katman (altyapı · kaynak API · veritabanı · senkronizasyon · işletim), kaynak sistemden beklenen 6 özellik, yöntem seçim kararı, zorunlu DB yapıları, güvenlik tablosu, operasyon ve 8 kabul senaryosu. Her gereksinim projede hangi dosyayla karşılandığını gösterir. |
 
 Hedef API çalışmıyorsa tarayıcıda `http://127.0.0.1:8000/dashboard` açılmaz.
 Bu durumda en kısa yol:
@@ -771,6 +773,38 @@ gündelik benzetmeler kullanır (defter tutmak, markete liste ile gitmek gibi).
 | 9 | Sayılarla: ilk tur 2.000, sonraki turlar 3 kayıt |
 | 10 | Ters giderse: defter ilerlemez, sonraki tur toparlar |
 | 11 | Tek cümlelik özet |
+
+### Gereksinim analizi (12 slayt)
+
+"Canlı veri çekmek için **ne gerekiyor**?" sorusunun cevabı:
+<http://127.0.0.1:8000/slayt-gereksinim>
+
+```powershell
+python run_slayt_gereksinim.py
+```
+
+Bir projeye başlamadan önce yapılan **gereksinim analizi** gibi düşünün: hangi
+bileşen şart, hangisi opsiyonel, seçim nasıl yapılır ve "tamam" demeden önce
+neyi kanıtlamak gerekir.
+
+| Slayt | Konu |
+|---|---|
+| 1 | Kapak — tek program değil, küçük bir sistem |
+| 2 | **Beş katman, tek bir sistem** (altyapı · kaynak · veritabanı · senkronizasyon · işletim) |
+| 3 | Altyapı tablosu: OS, Python, SQL Server, ODBC, disk, bellek — asgari/önerilen/neden |
+| 4 | Kaynaktan beklenen **6 özellik** (sabit dış kimlik, `updated_at`, `updated_since`, sayfalama, silme bilgisi, UTC) |
+| 5 | **Yöntem seçimi:** artımlı mı, tam çekim mi, olay bazlı mı, CDC mi? |
+| 6 | Hedef veritabanında **şart olan 9 yapı** ve "yoksa ne olur" |
+| 7 | Senkronizasyon servisinin **9 görevi** |
+| 8 | Uygulama sırası: klinik → hasta → randevu (FK bağımlılığı) |
+| 9 | Güvenlik: 8 gereksinim ve uygulama yöntemi |
+| 10 | Operasyon: zamanlayıcı, kilit, log, izleme, uyarı, yedekleme |
+| 11 | **8 kabul senaryosu** — "tamam" demeden önce kanıt |
+| 12 | Yol haritası (Faz 0–4) + her gereksinimin projedeki dosya karşılığı |
+
+Öne çıkan fikir: en sık atlanan katman **operasyon**. Kurulum çalışır ama iki
+hafta sonra "veri neden eksik?" sorusunu kimse cevaplayamaz — çünkü log ve
+izleme yoktur.
 
 Panelin gösterdiği her sayı **MSSQL'den** gelir:
 
